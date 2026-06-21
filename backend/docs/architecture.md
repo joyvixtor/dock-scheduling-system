@@ -2,6 +2,21 @@
 
 O ecossistema Davenport é construído sobre o paradigma de **Microsserviços Federados**, utilizando **Go** para alta performance e **Apollo Federation** para disponibilizar uma API GraphQL unificada para os clientes.
 
+## 🗺️ Mapa da Arquitetura
+
+```text
+[ Cliente (Frontend / API) ]
+           │
+           ▼ (GraphQL Query)
+[ Apollo Router Gateway :8000 ]
+           │
+           ├──────────────► [ Orders Subgraph :8081 ] ──────► ( Orders Postgres DB :5433 )
+           │
+           ├──────────────► [ Inbound Subgraph :8082 ] ─────► ( Inbound Postgres DB :5434 )
+           │
+           └──────────────► [ Crossdock Subgraph :8083 ] ───► ( Crossdock Postgres DB :5435 )
+```
+
 ## 🧱 Componentes Principais
 
 ### 1. Go Workspace (`go.work`)
