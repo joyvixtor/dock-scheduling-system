@@ -1,0 +1,128 @@
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+enum DockStatus
+  @join__type(graph: INBOUND)
+{
+  AVAILABLE @join__enumValue(graph: INBOUND)
+  OCCUPIED @join__enumValue(graph: INBOUND)
+  MAINTENANCE @join__enumValue(graph: INBOUND)
+}
+
+type InboundDock
+  @join__type(graph: INBOUND, key: "id")
+{
+  id: ID!
+  dockNumber: String!
+  isRefrigerated: Boolean!
+  status: DockStatus!
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  CROSSDOCK @join__graph(name: "crossdock", url: "http://localhost:8083/query")
+  INBOUND @join__graph(name: "inbound", url: "http://localhost:8082/query")
+  ORDERS @join__graph(name: "orders", url: "http://localhost:8081/query")
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+type Mutation
+  @join__type(graph: CROSSDOCK)
+{
+  scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask
+  assignOperator(taskId: ID!, operatorId: ID!): TransferTask!
+  completeTransfer(taskId: ID!): TransferTask!
+}
+
+type Order
+  @join__type(graph: ORDERS, key: "id")
+{
+  id: ID!
+  sku: String!
+  quantity: Int!
+  status: OrderStatus!
+}
+
+enum OrderStatus
+  @join__type(graph: ORDERS)
+{
+  PENDING_BACKORDER @join__enumValue(graph: ORDERS)
+  ALLOCATED @join__enumValue(graph: ORDERS)
+  SHIPPED @join__enumValue(graph: ORDERS)
+}
+
+type Product
+  @join__type(graph: CROSSDOCK, key: "sku")
+  @join__type(graph: INBOUND, key: "sku")
+{
+  sku: String! @join__field(graph: CROSSDOCK, external: true) @join__field(graph: INBOUND)
+  activeTransferTasks: [TransferTask!]! @join__field(graph: CROSSDOCK)
+  name: String! @join__field(graph: INBOUND)
+  category: String! @join__field(graph: INBOUND)
+}
+
+type Query
+  @join__type(graph: CROSSDOCK)
+  @join__type(graph: INBOUND)
+  @join__type(graph: ORDERS)
+{
+  activeTransferTasks: [TransferTask!]! @join__field(graph: CROSSDOCK)
+  activeInboundDocks: [InboundDock!]! @join__field(graph: INBOUND)
+  productBySku(sku: String!): Product @join__field(graph: INBOUND)
+  pendingDemandBySku(sku: String!): Int! @join__field(graph: ORDERS)
+  pendingOrders(sku: String!): [Order!]! @join__field(graph: ORDERS)
+}
+
+enum TaskStatus
+  @join__type(graph: CROSSDOCK)
+{
+  CREATED @join__enumValue(graph: CROSSDOCK)
+  TRANSIT @join__enumValue(graph: CROSSDOCK)
+  COMPLETED @join__enumValue(graph: CROSSDOCK)
+}
+
+type TransferTask
+  @join__type(graph: CROSSDOCK, key: "id")
+{
+  id: ID!
+  sku: String!
+  quantity: Int!
+  inboundDockId: String!
+  outboundDockId: String!
+  status: TaskStatus!
+  operatorId: String
+  createdAt: String!
+}

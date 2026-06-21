@@ -1,19 +1,62 @@
-version: '3.8'
-
 services:
-  postgres:
+  orders-postgres:
     image: postgres:15-alpine
-    container_name: dock_scheduling_db
+    container_name: davenport_orders_postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: dock_scheduling
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: davenport_orders
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql 
-    restart: always
+      - orders_postgres_data:/var/lib/postgresql/data
+      - ./orders/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d davenport_orders"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  inbound-postgres:
+    image: postgres:15-alpine
+    container_name: davenport_inbound_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: davenport_inbound
+    ports:
+      - "5434:5432"
+    volumes:
+      - inbound_postgres_data:/var/lib/postgresql/data
+      - ./inbound/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d davenport_inbound"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  crossdock-postgres:
+    image: postgres:15-alpine
+    container_name: davenport_crossdock_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: davenport_crossdock
+    ports:
+      - "5435:5432"
+    volumes:
+      - crossdock_postgres_data:/var/lib/postgresql/data
+      - ./crossdock/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d davenport_crossdock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
+  orders_postgres_data:
+  inbound_postgres_data:
+  crossdock_postgres_data:

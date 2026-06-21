@@ -1,0 +1,19 @@
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type Order @key(fields: "id") {
+  id: ID!
+  sku: String!
+  quantity: Int!
+  status: OrderStatus!
+}
+
+enum OrderStatus {
+  PENDING_BACKORDER
+  ALLOCATED
+  SHIPPED
+}
+
+type Query {
+  pendingDemandBySku(sku: String!): Int!
+  pendingOrders(sku: String!): [Order!]!
+}

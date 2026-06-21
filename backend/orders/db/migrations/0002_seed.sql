@@ -1,0 +1,3 @@
+INSERT INTO orders (id, sku, quantity, status) VALUES
+('b28c50df-c637-4d37-889e-2244406fc1e5', 'SKU-123', 50, 'PENDING_BACKORDER'),
+('a123b456-c789-4d00-8899-2244406fbbbb', 'SKU-456', 15, 'ALLOCATED');

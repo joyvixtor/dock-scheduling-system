@@ -1,0 +1,33 @@
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@external"])
+
+type Product @key(fields: "sku") {
+  sku: String! @external
+  activeTransferTasks: [TransferTask!]!
+}
+
+type TransferTask @key(fields: "id") {
+  id: ID!
+  sku: String!
+  quantity: Int!
+  inboundDockId: String!
+  outboundDockId: String!
+  status: TaskStatus!
+  operatorId: String
+  createdAt: String!
+}
+
+enum TaskStatus {
+  CREATED
+  TRANSIT
+  COMPLETED
+}
+
+type Query {
+  activeTransferTasks: [TransferTask!]!
+}
+
+type Mutation {
+  scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask
+  assignOperator(taskId: ID!, operatorId: ID!): TransferTask!
+  completeTransfer(taskId: ID!): TransferTask!
+}

@@ -1,0 +1,44 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go build artifacts
+bin/
+backend/gateway/router
+*.exe
+*.test
+*.out
+coverage.out
+
+# Go workspace cache / vendor
+vendor/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.turbo/
+frontend/coverage/
+
+# Logs
+*.log
+
+# Database / local data
+backend/**/postgres_data/
+backend/**/pgdata/
+backend/**/data/
+
+# Temporary files
+tmp/
+temp/
