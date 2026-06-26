@@ -1,0 +1,26 @@
+mutation ScanInboundPallet($sku: String!, $quantity: Int!, $inboundDockId: String!) {
+  scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {
+    id
+    sku
+    quantity
+    inboundDockId
+    outboundDockId
+    status
+    createdAt
+  }
+}
+
+mutation AssignOperator($taskId: ID!, $operatorId: ID!) {
+  assignOperator(taskId: $taskId, operatorId: $operatorId) {
+    id
+    status
+    operatorId
+  }
+}
+
+mutation CompleteTransfer($taskId: ID!) {
+  completeTransfer(taskId: $taskId) {
+    id
+    status
+  }
+}

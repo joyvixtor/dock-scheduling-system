@@ -1,0 +1,20 @@
+query ActiveTransferTasks {
+  activeTransferTasks {
+    id
+    sku
+    quantity
+    inboundDockId
+    outboundDockId
+    status
+    operatorId
+    createdAt
+  }
+}
+
+query ActiveInboundDocks {
+  activeInboundDocks {
+    id
+    dockNumber
+    status
+  }
+}
