@@ -31,7 +31,7 @@ export default function GateCheckIn() {
       if (task) {
         toast({
           title: "✅ Redirecionamento Detectado!",
-          description: `Mover ${task.quantity}x ${task.sku} diretamente para a ${task.outboundDockId}`,
+          description: `Mover ${task.quantity}x ${task.sku} diretamente para a ${task.outboundDockId || "Doca de Saída (A Definir)"}`,
           variant: "default",
         });
         setSku('');

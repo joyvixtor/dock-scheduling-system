@@ -46,7 +46,8 @@ func (m *MatchingEngine) ScanInboundPallet(ctx context.Context, sku string, quan
 		SKU:            sku,
 		Quantity:       matchedQuantity,
 		InboundDockID:  inboundDockID,
-		OutboundDockID: "",
+		// Temporário: Roteia para uma doca fixa até criarmos o microsserviço de Outbound Docks
+		OutboundDockID: "OUT-01",
 		Status:         domain.TaskStatusCreated,
 		CreatedAt:      time.Now().UTC(),
 	}

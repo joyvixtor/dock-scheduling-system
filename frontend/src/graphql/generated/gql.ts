@@ -17,11 +17,17 @@ type Documents = {
     "mutation ScanInboundPallet($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n  scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n    id\n    sku\n    quantity\n    inboundDockId\n    outboundDockId\n    status\n    createdAt\n  }\n}\n\nmutation AssignOperator($taskId: ID!, $operatorId: ID!) {\n  assignOperator(taskId: $taskId, operatorId: $operatorId) {\n    id\n    status\n    operatorId\n  }\n}\n\nmutation CompleteTransfer($taskId: ID!) {\n  completeTransfer(taskId: $taskId) {\n    id\n    status\n  }\n}": typeof types.ScanInboundPalletDocument,
     "query ActiveTransferTasks {\n  activeTransferTasks {\n    id\n    sku\n    quantity\n    inboundDockId\n    outboundDockId\n    status\n    operatorId\n    createdAt\n  }\n}\n\nquery ActiveInboundDocks {\n  activeInboundDocks {\n    id\n    dockNumber\n    status\n  }\n}": typeof types.ActiveTransferTasksDocument,
     "\n  mutation ScanInboundPalletCheckIn($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n    scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n    }\n  }\n": typeof types.ScanInboundPalletCheckInDocument,
+    "\n  query GetActiveTransferTasks {\n    activeTransferTasks {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n      operatorId\n      createdAt\n    }\n  }\n": typeof types.GetActiveTransferTasksDocument,
+    "\n  mutation AssignOperatorToTask($taskId: ID!, $operatorId: ID!) {\n    assignOperator(taskId: $taskId, operatorId: $operatorId) {\n      id\n      status\n      operatorId\n    }\n  }\n": typeof types.AssignOperatorToTaskDocument,
+    "\n  mutation CompleteTransferTask($taskId: ID!) {\n    completeTransfer(taskId: $taskId) {\n      id\n      status\n    }\n  }\n": typeof types.CompleteTransferTaskDocument,
 };
 const documents: Documents = {
     "mutation ScanInboundPallet($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n  scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n    id\n    sku\n    quantity\n    inboundDockId\n    outboundDockId\n    status\n    createdAt\n  }\n}\n\nmutation AssignOperator($taskId: ID!, $operatorId: ID!) {\n  assignOperator(taskId: $taskId, operatorId: $operatorId) {\n    id\n    status\n    operatorId\n  }\n}\n\nmutation CompleteTransfer($taskId: ID!) {\n  completeTransfer(taskId: $taskId) {\n    id\n    status\n  }\n}": types.ScanInboundPalletDocument,
     "query ActiveTransferTasks {\n  activeTransferTasks {\n    id\n    sku\n    quantity\n    inboundDockId\n    outboundDockId\n    status\n    operatorId\n    createdAt\n  }\n}\n\nquery ActiveInboundDocks {\n  activeInboundDocks {\n    id\n    dockNumber\n    status\n  }\n}": types.ActiveTransferTasksDocument,
     "\n  mutation ScanInboundPalletCheckIn($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n    scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n    }\n  }\n": types.ScanInboundPalletCheckInDocument,
+    "\n  query GetActiveTransferTasks {\n    activeTransferTasks {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n      operatorId\n      createdAt\n    }\n  }\n": types.GetActiveTransferTasksDocument,
+    "\n  mutation AssignOperatorToTask($taskId: ID!, $operatorId: ID!) {\n    assignOperator(taskId: $taskId, operatorId: $operatorId) {\n      id\n      status\n      operatorId\n    }\n  }\n": types.AssignOperatorToTaskDocument,
+    "\n  mutation CompleteTransferTask($taskId: ID!) {\n    completeTransfer(taskId: $taskId) {\n      id\n      status\n    }\n  }\n": types.CompleteTransferTaskDocument,
 };
 
 /**
@@ -50,6 +56,18 @@ export function graphql(source: "query ActiveTransferTasks {\n  activeTransferTa
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation ScanInboundPalletCheckIn($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n    scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n    }\n  }\n"): (typeof documents)["\n  mutation ScanInboundPalletCheckIn($sku: String!, $quantity: Int!, $inboundDockId: String!) {\n    scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetActiveTransferTasks {\n    activeTransferTasks {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n      operatorId\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query GetActiveTransferTasks {\n    activeTransferTasks {\n      id\n      sku\n      quantity\n      inboundDockId\n      outboundDockId\n      status\n      operatorId\n      createdAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AssignOperatorToTask($taskId: ID!, $operatorId: ID!) {\n    assignOperator(taskId: $taskId, operatorId: $operatorId) {\n      id\n      status\n      operatorId\n    }\n  }\n"): (typeof documents)["\n  mutation AssignOperatorToTask($taskId: ID!, $operatorId: ID!) {\n    assignOperator(taskId: $taskId, operatorId: $operatorId) {\n      id\n      status\n      operatorId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CompleteTransferTask($taskId: ID!) {\n    completeTransfer(taskId: $taskId) {\n      id\n      status\n    }\n  }\n"): (typeof documents)["\n  mutation CompleteTransferTask($taskId: ID!) {\n    completeTransfer(taskId: $taskId) {\n      id\n      status\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
