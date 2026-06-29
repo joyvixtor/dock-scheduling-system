@@ -22,10 +22,11 @@ directive @link(url: String, as: String, for: link__Purpose, import: [link__Impo
 
 enum DockStatus
   @join__type(graph: INBOUND)
+  @join__type(graph: OUTBOUND)
 {
-  AVAILABLE @join__enumValue(graph: INBOUND)
-  OCCUPIED @join__enumValue(graph: INBOUND)
-  MAINTENANCE @join__enumValue(graph: INBOUND)
+  AVAILABLE @join__enumValue(graph: INBOUND) @join__enumValue(graph: OUTBOUND)
+  OCCUPIED @join__enumValue(graph: INBOUND) @join__enumValue(graph: OUTBOUND)
+  MAINTENANCE @join__enumValue(graph: INBOUND) @join__enumValue(graph: OUTBOUND)
 }
 
 type InboundDock
@@ -35,6 +36,8 @@ type InboundDock
   dockNumber: String!
   isRefrigerated: Boolean!
   status: DockStatus!
+  locationX: Int!
+  locationY: Int!
 }
 
 scalar join__FieldSet
@@ -43,6 +46,7 @@ enum join__Graph {
   CROSSDOCK @join__graph(name: "crossdock", url: "http://localhost:8083/query")
   INBOUND @join__graph(name: "inbound", url: "http://localhost:8082/query")
   ORDERS @join__graph(name: "orders", url: "http://localhost:8081/query")
+  OUTBOUND @join__graph(name: "outbound", url: "http://localhost:8084/query")
 }
 
 scalar link__Import
@@ -84,6 +88,17 @@ enum OrderStatus
   SHIPPED @join__enumValue(graph: ORDERS)
 }
 
+type OutboundDock
+  @join__type(graph: OUTBOUND, key: "id")
+{
+  id: ID!
+  dockNumber: String!
+  isRefrigerated: Boolean!
+  status: DockStatus!
+  locationX: Int!
+  locationY: Int!
+}
+
 type Product
   @join__type(graph: CROSSDOCK, key: "sku")
   @join__type(graph: INBOUND, key: "sku")
@@ -98,12 +113,16 @@ type Query
   @join__type(graph: CROSSDOCK)
   @join__type(graph: INBOUND)
   @join__type(graph: ORDERS)
+  @join__type(graph: OUTBOUND)
 {
   activeTransferTasks: [TransferTask!]! @join__field(graph: CROSSDOCK)
   activeInboundDocks: [InboundDock!]! @join__field(graph: INBOUND)
   productBySku(sku: String!): Product @join__field(graph: INBOUND)
+  inboundDockById(id: String!): InboundDock @join__field(graph: INBOUND)
   pendingDemandBySku(sku: String!): Int! @join__field(graph: ORDERS)
   pendingOrders(sku: String!): [Order!]! @join__field(graph: ORDERS)
+  activeOutboundDocks: [OutboundDock!]! @join__field(graph: OUTBOUND)
+  closestEmptyOutboundDock(locationX: Int!, locationY: Int!): OutboundDock @join__field(graph: OUTBOUND)
 }
 
 enum TaskStatus

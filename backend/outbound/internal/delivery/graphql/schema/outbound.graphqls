@@ -1,0 +1,21 @@
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type OutboundDock @key(fields: "id") {
+  id: ID!
+  dockNumber: String!
+  isRefrigerated: Boolean!
+  status: DockStatus!
+  locationX: Int!
+  locationY: Int!
+}
+
+enum DockStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+type Query {
+  activeOutboundDocks: [OutboundDock!]!
+  closestEmptyOutboundDock(locationX: Int!, locationY: Int!): OutboundDock
+}

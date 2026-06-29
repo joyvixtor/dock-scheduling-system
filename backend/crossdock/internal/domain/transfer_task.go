@@ -30,6 +30,24 @@ type OrderServiceClient interface {
 	PendingDemandBySKU(ctx context.Context, sku string) (int, error)
 }
 
+type InboundDockCoordinates struct {
+	LocationX int
+	LocationY int
+}
+
+type InboundServiceClient interface {
+	FindInboundDockCoordinates(ctx context.Context, dockID string) (*InboundDockCoordinates, error)
+}
+
+type OutboundDockReference struct {
+	ID         string
+	DockNumber string
+}
+
+type OutboundServiceClient interface {
+	ClosestEmptyOutboundDock(ctx context.Context, locationX, locationY int) (*OutboundDockReference, error)
+}
+
 type Repository interface {
 	CreateTransferTask(ctx context.Context, task *TransferTask) (*TransferTask, error)
 	ActiveTransferTasks(ctx context.Context) ([]TransferTask, error)

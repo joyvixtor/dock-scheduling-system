@@ -15,6 +15,8 @@ type InboundDock struct {
 	DockNumber     string
 	IsRefrigerated bool
 	Status         DockStatus
+	LocationX      int
+	LocationY      int
 }
 
 func (InboundDock) IsEntity() {}

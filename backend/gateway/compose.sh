@@ -27,6 +27,10 @@ subgraphs:
     routing_url: http://localhost:8083/query
     schema:
       file: ../crossdock/internal/delivery/graphql/schema/crossdock.graphqls
+  outbound:
+    routing_url: http://localhost:8084/query
+    schema:
+      file: ../outbound/internal/delivery/graphql/schema/outbound.graphqls
 YAML
 
 rover supergraph compose \

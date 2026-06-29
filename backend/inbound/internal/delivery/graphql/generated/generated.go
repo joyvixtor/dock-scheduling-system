@@ -46,6 +46,8 @@ type ComplexityRoot struct {
 		DockNumber     func(childComplexity int) int
 		ID             func(childComplexity int) int
 		IsRefrigerated func(childComplexity int) int
+		LocationX      func(childComplexity int) int
+		LocationY      func(childComplexity int) int
 		Status         func(childComplexity int) int
 	}
 
@@ -57,6 +59,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		ActiveInboundDocks func(childComplexity int) int
+		InboundDockByID    func(childComplexity int, id string) int
 		ProductBySku       func(childComplexity int, sku string) int
 		__resolve__service func(childComplexity int) int
 		__resolve_entities func(childComplexity int, representations []map[string]any) int
@@ -74,6 +77,7 @@ type EntityResolver interface {
 type QueryResolver interface {
 	ActiveInboundDocks(ctx context.Context) ([]*domain.InboundDock, error)
 	ProductBySku(ctx context.Context, sku string) (*domain.Product, error)
+	InboundDockByID(ctx context.Context, id string) (*domain.InboundDock, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -131,6 +135,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.InboundDock.IsRefrigerated(childComplexity), true
+	case "InboundDock.locationX":
+		if e.ComplexityRoot.InboundDock.LocationX == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundDock.LocationX(childComplexity), true
+	case "InboundDock.locationY":
+		if e.ComplexityRoot.InboundDock.LocationY == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InboundDock.LocationY(childComplexity), true
 	case "InboundDock.status":
 		if e.ComplexityRoot.InboundDock.Status == nil {
 			break
@@ -163,6 +179,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ActiveInboundDocks(childComplexity), true
+	case "Query.inboundDockById":
+		if e.ComplexityRoot.Query.InboundDockByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_inboundDockById_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InboundDockByID(childComplexity, args["id"].(string)), true
 
 	case "Query.productBySku":
 		if e.ComplexityRoot.Query.ProductBySku == nil {
@@ -274,6 +301,8 @@ type InboundDock @key(fields: "id") {
   dockNumber: String!
   isRefrigerated: Boolean!
   status: DockStatus!
+  locationX: Int!
+  locationY: Int!
 }
 
 enum DockStatus {
@@ -291,6 +320,7 @@ type Product @key(fields: "sku") {
 type Query {
   activeInboundDocks: [InboundDock!]!
   productBySku(sku: String!): Product
+  inboundDockById(id: String!): InboundDock
 }`, BuiltIn: false},
 	{Name: "../../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
@@ -379,6 +409,10 @@ func (ec *executionContext) childFields_InboundDock(ctx context.Context, field g
 		return ec.fieldContext_InboundDock_isRefrigerated(ctx, field)
 	case "status":
 		return ec.fieldContext_InboundDock_status(ctx, field)
+	case "locationX":
+		return ec.fieldContext_InboundDock_locationX(ctx, field)
+	case "locationY":
+		return ec.fieldContext_InboundDock_locationY(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type InboundDock", field.Name)
 }
@@ -572,6 +606,20 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["representations"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_inboundDockById_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -833,6 +881,52 @@ func (ec *executionContext) fieldContext_InboundDock_status(_ context.Context, f
 	return graphql.NewScalarFieldContext("InboundDock", field, false, false, errors.New("field of type DockStatus does not have child fields"))
 }
 
+func (ec *executionContext) _InboundDock_locationX(ctx context.Context, field graphql.CollectedField, obj *domain.InboundDock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundDock_locationX(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationX, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundDock_locationX(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundDock", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InboundDock_locationY(ctx context.Context, field graphql.CollectedField, obj *domain.InboundDock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InboundDock_locationY(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationY, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InboundDock_locationY(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InboundDock", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _Product_sku(ctx context.Context, field graphql.CollectedField, obj *domain.Product) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -972,6 +1066,50 @@ func (ec *executionContext) fieldContext_Query_productBySku(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_productBySku_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_inboundDockById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_inboundDockById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().InboundDockByID(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *domain.InboundDock) graphql.Marshaler {
+			return ec.marshalOInboundDock2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋinboundᚋinternalᚋdomainᚐInboundDock(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_inboundDockById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InboundDock(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_inboundDockById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2364,6 +2502,16 @@ func (ec *executionContext) _InboundDock(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "locationX":
+			out.Values[i] = ec._InboundDock_locationX(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locationY":
+			out.Values[i] = ec._InboundDock_locationY(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2487,6 +2635,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_productBySku(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "inboundDockById":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_inboundDockById(ctx, field)
 				return res
 			}
 
@@ -3037,6 +3204,22 @@ func (ec *executionContext) marshalNInboundDock2ᚖgithubᚗcomᚋjoyvixtorᚋdo
 	return ec._InboundDock(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNProduct2githubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋinboundᚋinternalᚋdomainᚐProduct(ctx context.Context, sel ast.SelectionSet, v domain.Product) graphql.Marshaler {
 	return ec._Product(ctx, sel, &v)
 }
@@ -3454,6 +3637,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOInboundDock2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋinboundᚋinternalᚋdomainᚐInboundDock(ctx context.Context, sel ast.SelectionSet, v *domain.InboundDock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InboundDock(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋinboundᚋinternalᚋdomainᚐProduct(ctx context.Context, sel ast.SelectionSet, v *domain.Product) graphql.Marshaler {

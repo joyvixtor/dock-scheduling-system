@@ -5,6 +5,8 @@ type InboundDock @key(fields: "id") {
   dockNumber: String!
   isRefrigerated: Boolean!
   status: DockStatus!
+  locationX: Int!
+  locationY: Int!
 }
 
 enum DockStatus {
@@ -22,4 +24,5 @@ type Product @key(fields: "sku") {
 type Query {
   activeInboundDocks: [InboundDock!]!
   productBySku(sku: String!): Product
+  inboundDockById(id: String!): InboundDock
 }

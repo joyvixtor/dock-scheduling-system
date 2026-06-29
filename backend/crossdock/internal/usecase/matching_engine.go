@@ -18,12 +18,14 @@ type Repository interface {
 }
 
 type MatchingEngine struct {
-	repo          Repository
-	orderServices domain.OrderServiceClient
+	repo            Repository
+	orderServices   domain.OrderServiceClient
+	inboundServices domain.InboundServiceClient
+	outboundServices domain.OutboundServiceClient
 }
 
-func NewMatchingEngine(repo Repository, orderServices domain.OrderServiceClient) *MatchingEngine {
-	return &MatchingEngine{repo: repo, orderServices: orderServices}
+func NewMatchingEngine(repo Repository, orderServices domain.OrderServiceClient, inboundServices domain.InboundServiceClient, outboundServices domain.OutboundServiceClient) *MatchingEngine {
+	return &MatchingEngine{repo: repo, orderServices: orderServices, inboundServices: inboundServices, outboundServices: outboundServices}
 }
 
 func (m *MatchingEngine) ScanInboundPallet(ctx context.Context, sku string, quantity int, inboundDockID string) (*domain.TransferTask, error) {
@@ -41,13 +43,24 @@ func (m *MatchingEngine) ScanInboundPallet(ctx context.Context, sku string, quan
 		return nil, fmt.Errorf("no pending demand for sku %s", sku)
 	}
 
+	// Buscamos as coordenadas da doca de entrada
+	inboundCoords, err := m.inboundServices.FindInboundDockCoordinates(ctx, inboundDockID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get inbound dock coordinates: %w", err)
+	}
+
+	// Buscamos a doca de saída mais próxima e vazia
+	outboundDock, err := m.outboundServices.ClosestEmptyOutboundDock(ctx, inboundCoords.LocationX, inboundCoords.LocationY)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find closest outbound dock: %w", err)
+	}
+
 	task := &domain.TransferTask{
 		ID:             uuid.NewString(),
 		SKU:            sku,
 		Quantity:       matchedQuantity,
 		InboundDockID:  inboundDockID,
-		// Temporário: Roteia para uma doca fixa até criarmos o microsserviço de Outbound Docks
-		OutboundDockID: "OUT-01",
+		OutboundDockID: outboundDock.DockNumber,
 		Status:         domain.TaskStatusCreated,
 		CreatedAt:      time.Now().UTC(),
 	}

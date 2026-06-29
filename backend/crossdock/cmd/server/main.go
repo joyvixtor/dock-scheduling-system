@@ -44,8 +44,6 @@ func main() {
 		log.Fatal("Allowed Origin is not set")
 	}
 
-	ordersGraphQLURL := getenv("ORDERS_GRAPHQL_URL", "http://localhost:8081/query")
-
 	pool, err := newPool(ctx, databaseURL)
 	if err != nil {
 		log.Fatalf("connect postgres: %v", err)
@@ -53,8 +51,17 @@ func main() {
 	defer pool.Close()
 
 	repo := pgrepo.NewRepository(pool)
-	orderClient := httpclient.NewOrderServiceClient(ordersGraphQLURL)
-	engine := usecase.NewMatchingEngine(repo, orderClient)
+
+	ordersEndpoint := getenv("ORDERS_GRAPHQL_ENDPOINT", "http://localhost:8081/query")
+	orderClient := httpclient.NewOrderServiceClient(ordersEndpoint)
+
+	inboundEndpoint := getenv("INBOUND_GRAPHQL_ENDPOINT", "http://localhost:8082/query")
+	inboundClient := httpclient.NewInboundServiceClient(inboundEndpoint)
+
+	outboundEndpoint := getenv("OUTBOUND_GRAPHQL_ENDPOINT", "http://localhost:8084/query")
+	outboundClient := httpclient.NewOutboundServiceClient(outboundEndpoint)
+
+	engine := usecase.NewMatchingEngine(repo, orderClient, inboundClient, outboundClient)
 	resolver := resolvers.NewResolver(engine)
 	srv := newGraphQLServer(resolver)
 

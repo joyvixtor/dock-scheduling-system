@@ -19,7 +19,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) ActiveInboundDocks(ctx context.Context) ([]domain.InboundDock, error) {
 	const query = `
-		SELECT id, dock_number, is_refrigerated, status
+		SELECT id, dock_number, is_refrigerated, status, location_x, location_y
 		FROM inbound_docks
 		WHERE status = 'AVAILABLE'
 		ORDER BY dock_number
@@ -35,7 +35,7 @@ func (r *Repository) ActiveInboundDocks(ctx context.Context) ([]domain.InboundDo
 	for rows.Next() {
 		var dock domain.InboundDock
 		var status string
-		if err := rows.Scan(&dock.ID, &dock.DockNumber, &dock.IsRefrigerated, &status); err != nil {
+		if err := rows.Scan(&dock.ID, &dock.DockNumber, &dock.IsRefrigerated, &status, &dock.LocationX, &dock.LocationY); err != nil {
 			return nil, fmt.Errorf("scan inbound dock: %w", err)
 		}
 		dock.Status = domain.DockStatus(status)
@@ -66,14 +66,14 @@ func (r *Repository) ProductBySKU(ctx context.Context, sku string) (*domain.Prod
 
 func (r *Repository) FindInboundDockByID(ctx context.Context, id string) (*domain.InboundDock, error) {
 	const query = `
-		SELECT id, dock_number, is_refrigerated, status
+		SELECT id, dock_number, is_refrigerated, status, location_x, location_y
 		FROM inbound_docks
 		WHERE id = $1
 	`
 
 	var dock domain.InboundDock
 	var status string
-	if err := r.pool.QueryRow(ctx, query, id).Scan(&dock.ID, &dock.DockNumber, &dock.IsRefrigerated, &status); err != nil {
+	if err := r.pool.QueryRow(ctx, query, id).Scan(&dock.ID, &dock.DockNumber, &dock.IsRefrigerated, &status, &dock.LocationX, &dock.LocationY); err != nil {
 		return nil, fmt.Errorf("find inbound dock by id: %w", err)
 	}
 
