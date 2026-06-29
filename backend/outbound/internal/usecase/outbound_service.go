@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	ActiveOutboundDocks(ctx context.Context) ([]domain.OutboundDock, error)
 	FindOutboundDockByID(ctx context.Context, id string) (*domain.OutboundDock, error)
+	UpdateStatus(ctx context.Context, id string, status domain.DockStatus) error
 }
 
 type Service struct {
@@ -63,4 +64,16 @@ func (s *Service) ClosestEmptyOutboundDock(ctx context.Context, locationX, locat
 	}
 
 	return closestDock, nil
+}
+
+func (s *Service) UpdateStatus(ctx context.Context, id string, status domain.DockStatus) (*domain.OutboundDock, error) {
+	if id == "" {
+		return nil, fmt.Errorf("id is required")
+	}
+
+	if err := s.repo.UpdateStatus(ctx, id, status); err != nil {
+		return nil, err
+	}
+
+	return s.repo.FindOutboundDockByID(ctx, id)
 }

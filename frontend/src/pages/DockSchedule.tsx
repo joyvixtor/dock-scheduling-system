@@ -47,6 +47,22 @@ const SCAN_INBOUND = gql`
   }
 `;
 
+const UPDATE_INBOUND = gql`
+  mutation UpdateInboundDockStatus($id: ID!, $status: DockStatus!) {
+    updateInboundDockStatus(id: $id, status: $status) {
+      id
+    }
+  }
+`;
+
+const UPDATE_OUTBOUND = gql`
+  mutation UpdateOutboundDockStatus($id: ID!, $status: DockStatus!) {
+    updateOutboundDockStatus(id: $id, status: $status) {
+      id
+    }
+  }
+`;
+
 export default function DockSchedule() {
   const currentDate = "2026-06-29"; 
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
@@ -58,6 +74,10 @@ export default function DockSchedule() {
 
   const [updateStatus, { loading: updating }] = useMutation(UPDATE_APPT_STATUS);
   const [scanInbound, { loading: scanning }] = useMutation(SCAN_INBOUND);
+  const [updateInbound, { loading: upIn }] = useMutation(UPDATE_INBOUND);
+  const [updateOutbound, { loading: upOut }] = useMutation(UPDATE_OUTBOUND);
+
+  const isBusy = updating || scanning || upIn || upOut;
 
   if (loading && !data) {
     return (
@@ -247,7 +267,7 @@ export default function DockSchedule() {
               <button 
                 onClick={() => setSelectedAppt(null)}
                 className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                disabled={updating || scanning}
+                disabled={isBusy}
               >
                 Cancelar
               </button>
@@ -257,16 +277,20 @@ export default function DockSchedule() {
                     try {
                       await updateStatus({ variables: { id: selectedAppt.id, status: "ARRIVED" } });
                       
-                      // Identify if dock is Inbound
                       const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
-                      if (isInbound && selectedAppt.sku) {
-                        await scanInbound({ 
-                          variables: { 
-                            sku: selectedAppt.sku, 
-                            quantity: selectedAppt.quantity, 
-                            inboundDockId: selectedAppt.dockId 
-                          } 
-                        });
+                      if (isInbound) {
+                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
+                        if (selectedAppt.sku) {
+                          await scanInbound({ 
+                            variables: { 
+                              sku: selectedAppt.sku, 
+                              quantity: selectedAppt.quantity, 
+                              inboundDockId: selectedAppt.dockId 
+                            } 
+                          });
+                        }
+                      } else {
+                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
                       }
                       
                       refetch();
@@ -275,11 +299,37 @@ export default function DockSchedule() {
                       alert("Erro: " + e.message);
                     }
                   }}
-                  disabled={updating || scanning}
+                  disabled={isBusy}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
                 >
-                  {(updating || scanning) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {(isBusy) && <Loader2 className="w-4 h-4 animate-spin" />}
                   Confirmar Chegada
+                </button>
+              )}
+              {selectedAppt.status === 'ARRIVED' && (
+                <button 
+                  onClick={async () => {
+                    try {
+                      await updateStatus({ variables: { id: selectedAppt.id, status: "COMPLETED" } });
+                      
+                      const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
+                      if (isInbound) {
+                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" }});
+                      } else {
+                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" }});
+                      }
+                      
+                      refetch();
+                      setSelectedAppt(null);
+                    } catch (e: any) {
+                      alert("Erro: " + e.message);
+                    }
+                  }}
+                  disabled={isBusy}
+                  className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {(isBusy) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirmar Partida (Liberar)
                 </button>
               )}
             </div>

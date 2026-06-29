@@ -12,6 +12,11 @@ import (
 	"github.com/joyvixtor/dock-scheduling-system/backend/inbound/internal/domain"
 )
 
+// UpdateInboundDockStatus is the resolver for the updateInboundDockStatus field.
+func (r *mutationResolver) UpdateInboundDockStatus(ctx context.Context, id string, status domain.DockStatus) (*domain.InboundDock, error) {
+	return r.Service.UpdateStatus(ctx, id, status)
+}
+
 // ActiveInboundDocks is the resolver for the activeInboundDocks field.
 func (r *queryResolver) ActiveInboundDocks(ctx context.Context) ([]*domain.InboundDock, error) {
 	docks, err := r.Service.ActiveInboundDocks(ctx)
@@ -38,7 +43,13 @@ func (r *queryResolver) InboundDockByID(ctx context.Context, id string) (*domain
 	return r.Service.FindInboundDockByID(ctx, id)
 }
 
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

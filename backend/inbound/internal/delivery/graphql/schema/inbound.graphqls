@@ -26,3 +26,7 @@ type Query {
   productBySku(sku: String!): Product
   inboundDockById(id: String!): InboundDock
 }
+
+type Mutation {
+  updateInboundDockStatus(id: ID!, status: DockStatus!): InboundDock
+}

@@ -104,12 +104,16 @@ enum link__Purpose {
 type Mutation
   @join__type(graph: APPOINTMENTS)
   @join__type(graph: CROSSDOCK)
+  @join__type(graph: INBOUND)
+  @join__type(graph: OUTBOUND)
 {
   createAppointment(input: CreateAppointmentInput!): Appointment! @join__field(graph: APPOINTMENTS)
   updateAppointmentStatus(id: ID!, status: AppointmentStatus!): Appointment! @join__field(graph: APPOINTMENTS)
   scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask @join__field(graph: CROSSDOCK)
   assignOperator(taskId: ID!, operatorId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
   completeTransfer(taskId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
+  updateInboundDockStatus(id: ID!, status: DockStatus!): InboundDock @join__field(graph: INBOUND)
+  updateOutboundDockStatus(id: ID!, status: DockStatus!): OutboundDock @join__field(graph: OUTBOUND)
 }
 
 type Order

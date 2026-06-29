@@ -79,3 +79,22 @@ func (r *Repository) FindInboundDockByID(ctx context.Context, id string) (*domai
 	dock.Status = domain.DockStatus(status)
 	return &dock, nil
 }
+
+func (r *Repository) UpdateStatus(ctx context.Context, id string, status domain.DockStatus) error {
+	const query = `
+		UPDATE inbound_docks
+		SET status = $1
+		WHERE id = $2
+	`
+
+	res, err := r.pool.Exec(ctx, query, string(status), id)
+	if err != nil {
+		return fmt.Errorf("update inbound dock status: %w", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("inbound dock not found")
+	}
+
+	return nil
+}

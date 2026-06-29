@@ -19,3 +19,7 @@ type Query {
   activeOutboundDocks: [OutboundDock!]!
   closestEmptyOutboundDock(locationX: Int!, locationY: Int!): OutboundDock
 }
+
+type Mutation {
+  updateOutboundDockStatus(id: ID!, status: DockStatus!): OutboundDock
+}

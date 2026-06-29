@@ -30,6 +30,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Entity() EntityResolver
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -39,6 +40,10 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Entity struct {
 		FindOutboundDockByID func(childComplexity int, id string) int
+	}
+
+	Mutation struct {
+		UpdateOutboundDockStatus func(childComplexity int, id string, status domain.DockStatus) int
 	}
 
 	OutboundDock struct {
@@ -68,6 +73,9 @@ type ComplexityRoot struct {
 
 type EntityResolver interface {
 	FindOutboundDockByID(ctx context.Context, id string) (*domain.OutboundDock, error)
+}
+type MutationResolver interface {
+	UpdateOutboundDockStatus(ctx context.Context, id string, status domain.DockStatus) (*domain.OutboundDock, error)
 }
 type QueryResolver interface {
 	ActiveOutboundDocks(ctx context.Context) ([]*domain.OutboundDock, error)
@@ -103,6 +111,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Entity.FindOutboundDockByID(childComplexity, args["id"].(string)), true
+
+	case "Mutation.updateOutboundDockStatus":
+		if e.ComplexityRoot.Mutation.UpdateOutboundDockStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOutboundDockStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateOutboundDockStatus(childComplexity, args["id"].(string), args["status"].(domain.DockStatus)), true
 
 	case "OutboundDock.dockNumber":
 		if e.ComplexityRoot.OutboundDock.DockNumber == nil {
@@ -225,6 +245,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 
 			return &response
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -271,6 +306,10 @@ enum DockStatus {
 type Query {
   activeOutboundDocks: [OutboundDock!]!
   closestEmptyOutboundDock(locationX: Int!, locationY: Int!): OutboundDock
+}
+
+type Mutation {
+  updateOutboundDockStatus(id: ID!, status: DockStatus!): OutboundDock
 }`, BuiltIn: false},
 	{Name: "../../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
@@ -504,6 +543,28 @@ func (ec *executionContext) field_Entity_findOutboundDockByID_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateOutboundDockStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (domain.DockStatus, error) {
+			return ec.unmarshalNDockStatus2githubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋoutboundᚋinternalᚋdomainᚐDockStatus(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -652,6 +713,50 @@ func (ec *executionContext) fieldContext_Entity_findOutboundDockByID(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Entity_findOutboundDockByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateOutboundDockStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateOutboundDockStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateOutboundDockStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(domain.DockStatus))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *domain.OutboundDock) graphql.Marshaler {
+			return ec.marshalOOutboundDock2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋoutboundᚋinternalᚋdomainᚐOutboundDock(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateOutboundDockStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_OutboundDock(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOutboundDockStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2176,6 +2281,54 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "updateOutboundDockStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOutboundDockStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
