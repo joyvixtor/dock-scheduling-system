@@ -3,6 +3,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
 import GateCheckIn from '@/pages/GateCheckIn';
 import OperatorQueue from '@/pages/OperatorQueue';
+import WarehouseDashboard from '@/pages/WarehouseDashboard';
+import DockSchedule from '@/pages/DockSchedule';
 
 function App() {
   return (
@@ -14,12 +16,20 @@ function App() {
         <Link to="/operator">
           <Button variant="ghost" className="text-white hover:text-slate-900">Fila do Operador</Button>
         </Link>
+        <Link to="/schedule">
+          <Button variant="ghost" className="text-white hover:text-slate-900">Agenda (Shiptify)</Button>
+        </Link>
+        <Link to="/dashboard">
+          <Button variant="ghost" className="text-white hover:text-slate-900">Visão Geral (Armazém)</Button>
+        </Link>
       </nav>
 
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<GateCheckIn />} />
           <Route path="/operator" element={<OperatorQueue />} />
+          <Route path="/schedule" element={<DockSchedule />} />
+          <Route path="/dashboard" element={<WarehouseDashboard />} />
         </Routes>
       </main>
 

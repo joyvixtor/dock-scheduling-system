@@ -58,7 +58,7 @@ func main() {
 	inboundEndpoint := getenv("INBOUND_GRAPHQL_ENDPOINT", "http://localhost:8082/query")
 	inboundClient := httpclient.NewInboundServiceClient(inboundEndpoint)
 
-	outboundEndpoint := getenv("OUTBOUND_GRAPHQL_ENDPOINT", "http://localhost:8084/query")
+	outboundEndpoint := getenv("OUTBOUND_GRAPHQL_ENDPOINT", "http://localhost:8085/query")
 	outboundClient := httpclient.NewOutboundServiceClient(outboundEndpoint)
 
 	engine := usecase.NewMatchingEngine(repo, orderClient, inboundClient, outboundClient)

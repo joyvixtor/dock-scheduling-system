@@ -5,4 +5,5 @@ use (
 	./inbound
 	./orders
 	./outbound
+	./appointments
 )

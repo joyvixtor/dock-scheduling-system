@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down compose router orders inbound crossdock outbound dev
+.PHONY: install db-up db-down compose router orders inbound crossdock outbound appointments dev
 
 ROUTER_VERSION=v1.59.2
 
@@ -43,7 +43,10 @@ crossdock:
 outbound:
 	cd outbound && set -a && . ./.env && set +a && air --build.cmd "go build -o tmp/main ./cmd/server" --build.bin "./tmp/main"
 
+appointments:
+	cd appointments && set -a && . ./.env && set +a && air --build.cmd "go build -o tmp/main ./cmd/server" --build.bin "./tmp/main"
+
 # Comando mágico: sobe os bancos, compõe o supergrafo e roda os 4 serviços + router em paralelo no terminal!
 dev: db-up compose
 	@echo "🚀 Iniciando todo o ecossistema Davenport em paralelo..."
-	@$(MAKE) -j 5 orders inbound crossdock outbound router
+	@$(MAKE) -j 6 orders inbound crossdock outbound appointments router

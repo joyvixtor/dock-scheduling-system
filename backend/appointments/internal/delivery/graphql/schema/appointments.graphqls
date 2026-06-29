@@ -1,0 +1,36 @@
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"])
+
+type Appointment @key(fields: "id") {
+  id: ID!
+  dockId: String!
+  carrier: String!
+  referenceCode: String!
+  startTime: String!
+  endTime: String!
+  palletsCount: Int!
+  status: AppointmentStatus!
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  ARRIVED
+  COMPLETED
+  CANCELLED
+}
+
+input CreateAppointmentInput {
+  dockId: String!
+  carrier: String!
+  referenceCode: String!
+  startTime: String!
+  endTime: String!
+  palletsCount: Int!
+}
+
+type Query {
+  appointmentsByDate(date: String!): [Appointment!]!
+}
+
+type Mutation {
+  createAppointment(input: CreateAppointmentInput!): Appointment!
+}

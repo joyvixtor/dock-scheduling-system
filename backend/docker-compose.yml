@@ -75,8 +75,28 @@ services:
       retries: 5
     restart: unless-stopped
 
+  appointments-postgres:
+    image: postgres:15-alpine
+    container_name: davenport_appointments_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: davenport_appointments
+    ports:
+      - "5437:5432"
+    volumes:
+      - appointments_postgres_data:/var/lib/postgresql/data
+      - ./appointments/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d davenport_appointments"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   orders_postgres_data:
   inbound_postgres_data:
   crossdock_postgres_data:
   outbound_postgres_data:
+  appointments_postgres_data:

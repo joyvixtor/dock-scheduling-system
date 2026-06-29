@@ -20,6 +20,39 @@ directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on
 
 directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
 
+type Appointment
+  @join__type(graph: APPOINTMENTS, key: "id")
+{
+  id: ID!
+  dockId: String!
+  carrier: String!
+  referenceCode: String!
+  startTime: String!
+  endTime: String!
+  palletsCount: Int!
+  status: AppointmentStatus!
+}
+
+enum AppointmentStatus
+  @join__type(graph: APPOINTMENTS)
+{
+  SCHEDULED @join__enumValue(graph: APPOINTMENTS)
+  ARRIVED @join__enumValue(graph: APPOINTMENTS)
+  COMPLETED @join__enumValue(graph: APPOINTMENTS)
+  CANCELLED @join__enumValue(graph: APPOINTMENTS)
+}
+
+input CreateAppointmentInput
+  @join__type(graph: APPOINTMENTS)
+{
+  dockId: String!
+  carrier: String!
+  referenceCode: String!
+  startTime: String!
+  endTime: String!
+  palletsCount: Int!
+}
+
 enum DockStatus
   @join__type(graph: INBOUND)
   @join__type(graph: OUTBOUND)
@@ -43,10 +76,11 @@ type InboundDock
 scalar join__FieldSet
 
 enum join__Graph {
+  APPOINTMENTS @join__graph(name: "appointments", url: "http://localhost:8086/query")
   CROSSDOCK @join__graph(name: "crossdock", url: "http://localhost:8083/query")
   INBOUND @join__graph(name: "inbound", url: "http://localhost:8082/query")
   ORDERS @join__graph(name: "orders", url: "http://localhost:8081/query")
-  OUTBOUND @join__graph(name: "outbound", url: "http://localhost:8084/query")
+  OUTBOUND @join__graph(name: "outbound", url: "http://localhost:8085/query")
 }
 
 scalar link__Import
@@ -64,11 +98,13 @@ enum link__Purpose {
 }
 
 type Mutation
+  @join__type(graph: APPOINTMENTS)
   @join__type(graph: CROSSDOCK)
 {
-  scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask
-  assignOperator(taskId: ID!, operatorId: ID!): TransferTask!
-  completeTransfer(taskId: ID!): TransferTask!
+  createAppointment(input: CreateAppointmentInput!): Appointment! @join__field(graph: APPOINTMENTS)
+  scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask @join__field(graph: CROSSDOCK)
+  assignOperator(taskId: ID!, operatorId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
+  completeTransfer(taskId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
 }
 
 type Order
@@ -110,11 +146,13 @@ type Product
 }
 
 type Query
+  @join__type(graph: APPOINTMENTS)
   @join__type(graph: CROSSDOCK)
   @join__type(graph: INBOUND)
   @join__type(graph: ORDERS)
   @join__type(graph: OUTBOUND)
 {
+  appointmentsByDate(date: String!): [Appointment!]! @join__field(graph: APPOINTMENTS)
   activeTransferTasks: [TransferTask!]! @join__field(graph: CROSSDOCK)
   activeInboundDocks: [InboundDock!]! @join__field(graph: INBOUND)
   productBySku(sku: String!): Product @join__field(graph: INBOUND)
