@@ -27,8 +27,16 @@ func (s *service) CreateAppointment(ctx context.Context, input domain.CreateAppo
 		return nil, fmt.Errorf("invalid end time: %w", err)
 	}
 
-	if endTime.Before(startTime) {
-		return nil, fmt.Errorf("end time must be after start time")
+	if endTime.Before(startTime) || endTime.Equal(startTime) {
+		return nil, fmt.Errorf("end time must be strictly after start time")
+	}
+
+	overlap, err := s.repo.HasOverlap(ctx, input.DockID, startTime, endTime)
+	if err != nil {
+		return nil, fmt.Errorf("could not check for overlapping appointments: %w", err)
+	}
+	if overlap {
+		return nil, fmt.Errorf("este horário já está agendado para a doca selecionada")
 	}
 
 	appt := &domain.Appointment{
@@ -38,6 +46,8 @@ func (s *service) CreateAppointment(ctx context.Context, input domain.CreateAppo
 		ReferenceCode: input.ReferenceCode,
 		StartTime:     startTime,
 		EndTime:       endTime,
+		SKU:           input.SKU,
+		Quantity:      input.Quantity,
 		PalletsCount:  input.PalletsCount,
 		Status:        domain.AppointmentStatusScheduled,
 	}
@@ -60,4 +70,12 @@ func (s *service) GetAppointmentsByDate(ctx context.Context, dateStr string) ([]
 	endOfDay := t.Add(24 * time.Hour)
 
 	return s.repo.FindByDate(ctx, startOfDay, endOfDay)
+}
+
+func (s *service) UpdateAppointmentStatus(ctx context.Context, id string, status domain.AppointmentStatus) (*domain.Appointment, error) {
+	err := s.repo.UpdateStatus(ctx, id, status)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.FindByID(ctx, id)
 }

@@ -14,17 +14,22 @@ import (
 
 // StartTime is the resolver for the startTime field.
 func (r *appointmentResolver) StartTime(ctx context.Context, obj *domain.Appointment) (string, error) {
-	return obj.StartTime.Format("2006-01-02T15:04:05Z"), nil
+	return obj.StartTime.UTC().Format("2006-01-02T15:04:05Z"), nil
 }
 
 // EndTime is the resolver for the endTime field.
 func (r *appointmentResolver) EndTime(ctx context.Context, obj *domain.Appointment) (string, error) {
-	return obj.EndTime.Format("2006-01-02T15:04:05Z"), nil
+	return obj.EndTime.UTC().Format("2006-01-02T15:04:05Z"), nil
 }
 
 // CreateAppointment is the resolver for the createAppointment field.
 func (r *mutationResolver) CreateAppointment(ctx context.Context, input domain.CreateAppointmentInput) (*domain.Appointment, error) {
 	return r.Service.CreateAppointment(ctx, input)
+}
+
+// UpdateAppointmentStatus is the resolver for the updateAppointmentStatus field.
+func (r *mutationResolver) UpdateAppointmentStatus(ctx context.Context, id string, status domain.AppointmentStatus) (*domain.Appointment, error) {
+	return r.Service.UpdateAppointmentStatus(ctx, id, status)
 }
 
 // AppointmentsByDate is the resolver for the appointmentsByDate field.

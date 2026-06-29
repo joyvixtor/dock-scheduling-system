@@ -21,7 +21,6 @@ func (r *Repository) ActiveInboundDocks(ctx context.Context) ([]domain.InboundDo
 	const query = `
 		SELECT id, dock_number, is_refrigerated, status, location_x, location_y
 		FROM inbound_docks
-		WHERE status = 'AVAILABLE'
 		ORDER BY dock_number
 	`
 

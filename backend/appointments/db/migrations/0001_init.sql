@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS appointments (
     reference_code VARCHAR(255) NOT NULL,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
+    sku VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL,
     pallets_count INT NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'SCHEDULED',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

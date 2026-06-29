@@ -45,7 +45,9 @@ type ComplexityRoot struct {
 		EndTime       func(childComplexity int) int
 		ID            func(childComplexity int) int
 		PalletsCount  func(childComplexity int) int
+		Quantity      func(childComplexity int) int
 		ReferenceCode func(childComplexity int) int
+		SKU           func(childComplexity int) int
 		StartTime     func(childComplexity int) int
 		Status        func(childComplexity int) int
 	}
@@ -55,7 +57,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateAppointment func(childComplexity int, input domain.CreateAppointmentInput) int
+		CreateAppointment       func(childComplexity int, input domain.CreateAppointmentInput) int
+		UpdateAppointmentStatus func(childComplexity int, id string, status domain.AppointmentStatus) int
 	}
 
 	Query struct {
@@ -82,6 +85,7 @@ type EntityResolver interface {
 }
 type MutationResolver interface {
 	CreateAppointment(ctx context.Context, input domain.CreateAppointmentInput) (*domain.Appointment, error)
+	UpdateAppointmentStatus(ctx context.Context, id string, status domain.AppointmentStatus) (*domain.Appointment, error)
 }
 type QueryResolver interface {
 	AppointmentsByDate(ctx context.Context, date string) ([]*domain.Appointment, error)
@@ -135,12 +139,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Appointment.PalletsCount(childComplexity), true
+	case "Appointment.quantity":
+		if e.ComplexityRoot.Appointment.Quantity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Appointment.Quantity(childComplexity), true
 	case "Appointment.referenceCode":
 		if e.ComplexityRoot.Appointment.ReferenceCode == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Appointment.ReferenceCode(childComplexity), true
+	case "Appointment.sku":
+		if e.ComplexityRoot.Appointment.SKU == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Appointment.SKU(childComplexity), true
 	case "Appointment.startTime":
 		if e.ComplexityRoot.Appointment.StartTime == nil {
 			break
@@ -177,6 +193,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateAppointment(childComplexity, args["input"].(domain.CreateAppointmentInput)), true
+	case "Mutation.updateAppointmentStatus":
+		if e.ComplexityRoot.Mutation.UpdateAppointmentStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAppointmentStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAppointmentStatus(childComplexity, args["id"].(string), args["status"].(domain.AppointmentStatus)), true
 
 	case "Query.appointmentsByDate":
 		if e.ComplexityRoot.Query.AppointmentsByDate == nil {
@@ -308,6 +335,8 @@ type Appointment @key(fields: "id") {
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
 }
@@ -325,6 +354,8 @@ input CreateAppointmentInput {
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
 }
 
@@ -334,6 +365,7 @@ type Query {
 
 type Mutation {
   createAppointment(input: CreateAppointmentInput!): Appointment!
+  updateAppointmentStatus(id: ID!, status: AppointmentStatus!): Appointment!
 }`, BuiltIn: false},
 	{Name: "../../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
@@ -425,6 +457,10 @@ func (ec *executionContext) childFields_Appointment(ctx context.Context, field g
 		return ec.fieldContext_Appointment_startTime(ctx, field)
 	case "endTime":
 		return ec.fieldContext_Appointment_endTime(ctx, field)
+	case "sku":
+		return ec.fieldContext_Appointment_sku(ctx, field)
+	case "quantity":
+		return ec.fieldContext_Appointment_quantity(ctx, field)
 	case "palletsCount":
 		return ec.fieldContext_Appointment_palletsCount(ctx, field)
 	case "status":
@@ -582,6 +618,28 @@ func (ec *executionContext) field_Mutation_createAppointment_args(ctx context.Co
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAppointmentStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (domain.AppointmentStatus, error) {
+			return ec.unmarshalNAppointmentStatus2githubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋappointmentsᚋinternalᚋdomainᚐAppointmentStatus(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
 	return args, nil
 }
 
@@ -825,6 +883,52 @@ func (ec *executionContext) fieldContext_Appointment_endTime(_ context.Context, 
 	return graphql.NewScalarFieldContext("Appointment", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Appointment_sku(ctx context.Context, field graphql.CollectedField, obj *domain.Appointment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Appointment_sku(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SKU, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Appointment_sku(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Appointment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Appointment_quantity(ctx context.Context, field graphql.CollectedField, obj *domain.Appointment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Appointment_quantity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Quantity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Appointment_quantity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Appointment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _Appointment_palletsCount(ctx context.Context, field graphql.CollectedField, obj *domain.Appointment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -953,6 +1057,50 @@ func (ec *executionContext) fieldContext_Mutation_createAppointment(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createAppointment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAppointmentStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateAppointmentStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateAppointmentStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(domain.AppointmentStatus))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *domain.Appointment) graphql.Marshaler {
+			return ec.marshalNAppointment2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋappointmentsᚋinternalᚋdomainᚐAppointment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateAppointmentStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Appointment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAppointmentStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2248,7 +2396,7 @@ func (ec *executionContext) unmarshalInputCreateAppointmentInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"dockId", "carrier", "referenceCode", "startTime", "endTime", "palletsCount"}
+	fieldsInOrder := [...]string{"dockId", "carrier", "referenceCode", "startTime", "endTime", "sku", "quantity", "palletsCount"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2290,6 +2438,20 @@ func (ec *executionContext) unmarshalInputCreateAppointmentInput(ctx context.Con
 				return it, err
 			}
 			it.EndTime = data
+		case "sku":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sku"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SKU = data
+		case "quantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Quantity = data
 		case "palletsCount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("palletsCount"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
@@ -2438,6 +2600,16 @@ func (ec *executionContext) _Appointment(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sku":
+			out.Values[i] = ec._Appointment_sku(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "quantity":
+			out.Values[i] = ec._Appointment_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "palletsCount":
 			out.Values[i] = ec._Appointment_palletsCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2555,6 +2727,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createAppointment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createAppointment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAppointmentStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAppointmentStatus(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

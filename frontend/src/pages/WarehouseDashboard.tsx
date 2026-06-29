@@ -1,7 +1,6 @@
 import { useQuery, gql } from '@apollo/client';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ServerCrash, Truck } from 'lucide-react';
+import { Loader2, ServerCrash, Truck, Snowflake } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GET_ALL_DOCKS = gql`
@@ -32,7 +31,7 @@ export default function WarehouseDashboard() {
 
   if (loading && !data) {
     return (
-      <div className="flex h-full min-h-[calc(100vh-80px)] items-center justify-center bg-slate-950">
+      <div className="flex h-full min-h-[calc(100vh-80px)] items-center justify-center bg-[#2f3942]">
         <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
       </div>
     );
@@ -40,7 +39,7 @@ export default function WarehouseDashboard() {
 
   if (error) {
     return (
-      <div className="p-8 bg-slate-950 min-h-[calc(100vh-80px)]">
+      <div className="p-8 bg-[#2f3942] min-h-[calc(100vh-80px)]">
         <Alert variant="destructive" className="max-w-2xl mx-auto bg-slate-900 border-red-500 text-red-100">
           <ServerCrash className="h-5 w-5 text-red-500" />
           <AlertTitle className="text-red-400 font-bold">Erro de Conexão</AlertTitle>
@@ -52,122 +51,140 @@ export default function WarehouseDashboard() {
     );
   }
 
+  // Sort by locationY to maintain physical order
+  const inboundDocks = [...(data?.activeInboundDocks || [])].sort((a, b) => a.locationY - b.locationY);
+  const outboundDocks = [...(data?.activeOutboundDocks || [])].sort((a, b) => a.locationY - b.locationY);
+
+  const availableIn = inboundDocks.filter(d => d.status === 'AVAILABLE').length;
+  const occupiedIn = inboundDocks.filter(d => d.status === 'OCCUPIED').length;
+  
+  const availableOut = outboundDocks.filter(d => d.status === 'AVAILABLE').length;
+  const occupiedOut = outboundDocks.filter(d => d.status === 'OCCUPIED').length;
+
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-slate-950 p-8 text-slate-100 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-[calc(100vh-80px)] bg-[#2f3942] p-8 text-slate-100 font-sans flex flex-col">
+      <div className="max-w-7xl mx-auto w-full">
         
-        <header className="mb-10 text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 mb-2">
-            Centro de Comando Logístico
+        <header className="mb-10 text-center flex flex-col items-center">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white mb-4">
+            Planta do Armazém
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto">
-            Visão espacial em tempo real de todas as docas Inbound e Outbound espalhadas pela planta (malha) do armazém.
+          <p className="text-slate-400 max-w-2xl mx-auto text-lg mb-6">
+            Visualização topográfica do pátio logístico.
           </p>
+          
+          {/* Quick Stats */}
+          <div className="flex gap-8 bg-[#1e272e] p-4 rounded-xl border border-slate-700/50 shadow-xl">
+            <div className="flex flex-col items-center px-4 border-r border-slate-700/50">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Inbound Disponível</span>
+              <span className="text-2xl font-black text-emerald-400">{availableIn}</span>
+            </div>
+            <div className="flex flex-col items-center px-4 border-r border-slate-700/50">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Inbound Ocupada</span>
+              <span className="text-2xl font-black text-amber-400">{occupiedIn}</span>
+            </div>
+            <div className="flex flex-col items-center px-4 border-r border-slate-700/50">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Outbound Disponível</span>
+              <span className="text-2xl font-black text-emerald-400">{availableOut}</span>
+            </div>
+            <div className="flex flex-col items-center px-4">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Outbound Ocupada</span>
+              <span className="text-2xl font-black text-amber-400">{occupiedOut}</span>
+            </div>
+          </div>
         </header>
 
-        {/* CSS GRID representing the Warehouse Floor Plan */}
-        <div className="relative bg-slate-900/50 rounded-3xl border border-slate-800 p-8 backdrop-blur-xl shadow-2xl overflow-hidden min-h-[600px]">
+        {/* CSS GRID representing the Warehouse Floor Plan (Scrollable) */}
+        <div className="bg-[#1e272e] rounded-3xl border border-slate-700/50 p-6 backdrop-blur-xl shadow-2xl overflow-y-auto max-h-[800px] custom-scrollbar relative">
           
           {/* Subtle Grid Background */}
-          <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:40px_40px] opacity-20"></div>
+          <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:40px_40px] opacity-10"></div>
 
-          {/* Docks Container */}
-          <div className="relative z-10 w-full h-full">
-            {/* INBOUND DOCKS */}
-            {data?.activeInboundDocks.map((dock: any) => (
-              <DockPin 
-                key={dock.id} 
-                dock={dock} 
-                type="INBOUND" 
-                // We'll map Y roughly into top percent and X into left percent for the grid
-              />
-            ))}
+          <div className="relative z-10 w-full flex justify-between gap-12">
+            
+            {/* INBOUND WALL (Left) */}
+            <div className="flex-1 space-y-4">
+              <div className="sticky top-0 bg-[#1e272e]/90 backdrop-blur-md py-4 z-20 border-b border-indigo-500/30 mb-6">
+                <h2 className="text-xl font-black text-indigo-400 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                  <Truck className="w-5 h-5" />
+                  Parede Inbound (Recepção)
+                </h2>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                {inboundDocks.map((dock: any) => (
+                  <DockCard key={dock.id} dock={dock} type="INBOUND" />
+                ))}
+              </div>
+            </div>
 
-            {/* OUTBOUND DOCKS */}
-            {data?.activeOutboundDocks.map((dock: any) => (
-              <DockPin 
-                key={dock.id} 
-                dock={dock} 
-                type="OUTBOUND" 
-              />
-            ))}
+            {/* WAREHOUSE CENTER FLOOR (Decorative Aisle) */}
+            <div className="w-32 flex-shrink-0 flex flex-col items-center justify-center border-x border-slate-700/50 bg-slate-800/10 relative">
+              <div className="sticky top-1/2 -translate-y-1/2 text-slate-500 font-black text-4xl rotate-90 tracking-[1em] opacity-30 whitespace-nowrap">
+                CROSSDOCK
+              </div>
+            </div>
+
+            {/* OUTBOUND WALL (Right) */}
+            <div className="flex-1 space-y-4">
+              <div className="sticky top-0 bg-[#1e272e]/90 backdrop-blur-md py-4 z-20 border-b border-fuchsia-500/30 mb-6">
+                <h2 className="text-xl font-black text-fuchsia-400 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                  Parede Outbound (Expedição)
+                  <Truck className="w-5 h-5 transform scale-x-[-1]" />
+                </h2>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                {outboundDocks.map((dock: any) => (
+                  <DockCard key={dock.id} dock={dock} type="OUTBOUND" />
+                ))}
+              </div>
+            </div>
+
           </div>
-          
         </div>
       </div>
     </div>
   );
 }
 
-// Subcomponent for the visual representation of a dock
-function DockPin({ dock, type }: { dock: any, type: 'INBOUND' | 'OUTBOUND' }) {
-  // Convert coordinates to CSS absolute positioning.
-  // Assuming warehouse height represents Y (0 to 100) and width represents X (0 to 100).
-  // In our DB seeds: Inbound X=0, Y=(10,20,30,etc). Outbound X=0 (wait, X=0 for both?)
-  // Let's force Inbound to the LEFT side (left=5%) and Outbound to RIGHT side (left=80%).
-  
-  const topPos = `${Math.min(Math.max(dock.locationY, 5), 85)}%`;
-  const leftPos = type === 'INBOUND' ? '5%' : '80%';
-
+function DockCard({ dock, type }: { dock: any, type: 'INBOUND' | 'OUTBOUND' }) {
   const isAvailable = dock.status === 'AVAILABLE';
   const isOccupied = dock.status === 'OCCUPIED';
 
-  const badgeColor = isAvailable ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50" 
-    : isOccupied ? "bg-amber-500/20 text-amber-400 border-amber-500/50" 
-    : "bg-rose-500/20 text-rose-400 border-rose-500/50";
+  const badgeColor = isAvailable ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/50" 
+    : isOccupied ? "bg-amber-500/10 text-amber-400 border-amber-500/50" 
+    : "bg-rose-500/10 text-rose-400 border-rose-500/50";
 
-  const glowColor = isAvailable ? "shadow-[0_0_30px_rgba(16,185,129,0.3)]" 
-    : isOccupied ? "shadow-[0_0_30px_rgba(245,158,11,0.3)]"
-    : "shadow-[0_0_30px_rgba(244,63,94,0.3)]";
+  const glowClass = isOccupied ? "ring-1 ring-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]" : "border-slate-700/50";
 
   return (
-    <div 
-      className={`absolute flex items-center group transition-all duration-500 ease-out hover:z-50 hover:scale-110`}
-      style={{ top: topPos, left: leftPos }}
-    >
-      <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center border ${
-          type === 'INBOUND' ? 'bg-indigo-900/40 border-indigo-500/30 text-indigo-400' : 'bg-fuchsia-900/40 border-fuchsia-500/30 text-fuchsia-400'
-        } backdrop-blur-md cursor-pointer ${glowColor} transition-all relative`}
-      >
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{type === 'INBOUND' ? 'IN' : 'OUT'}</span>
-        <Truck className={`w-6 h-6 ${isOccupied ? 'opacity-100' : 'opacity-20'} transition-opacity`} />
-        
-        {/* Dock Number Badge attached to the pin */}
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-700 text-xs font-mono font-bold whitespace-nowrap shadow-xl text-white">
-          {dock.dockNumber}
-        </div>
-      </div>
-      
-      {/* Connector Line (decorative) */}
-      <div className={`h-0.5 w-12 ${type === 'INBOUND' ? 'bg-indigo-500/20 ml-4' : 'bg-fuchsia-500/20 order-first mr-4'} group-hover:w-16 transition-all`}></div>
+    <div className={`flex items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border ${glowClass} hover:bg-slate-800 transition-colors group relative overflow-hidden`}>
+      {/* Decorative accent line */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAvailable ? 'bg-emerald-500' : isOccupied ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
 
-      {/* Floating Info Card (appears on hover) */}
-      <div className={`absolute ${type === 'INBOUND' ? 'left-[100px]' : 'right-[100px]'} top-1/2 -translate-y-1/2 w-64 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 transform group-hover:translate-x-0 ${type === 'INBOUND' ? '-translate-x-4' : 'translate-x-4'}`}>
-        <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-xl shadow-2xl overflow-hidden">
-          <div className={`h-1 w-full ${isAvailable ? 'bg-emerald-500' : isOccupied ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
-          <CardHeader className="pb-2 pt-4">
-            <div className="flex justify-between items-start">
-              <CardTitle className="text-slate-200 text-lg">{dock.dockNumber}</CardTitle>
-              <Badge variant="outline" className={badgeColor}>{dock.status}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="space-y-2 text-sm text-slate-400">
-              <div className="flex justify-between">
-                <span>Tipo:</span>
-                <span className="text-slate-200 font-medium">{type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Refrigerada:</span>
-                <span className="text-slate-200 font-medium">{dock.isRefrigerated ? 'Sim ❄️' : 'Não'}</span>
-              </div>
-              <div className="flex justify-between font-mono text-xs mt-3 pt-3 border-t border-slate-800">
-                <span>COORDENADAS</span>
-                <span className="text-cyan-400">X:{dock.locationX} Y:{dock.locationY}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className={`w-14 h-14 shrink-0 rounded-xl flex items-center justify-center ${type === 'INBOUND' ? 'bg-indigo-500/10' : 'bg-fuchsia-500/10'}`}>
+        <Truck className={`w-7 h-7 ${type === 'INBOUND' ? 'text-indigo-400' : 'text-fuchsia-400'} ${isOccupied ? 'opacity-100' : 'opacity-20'} ${type === 'OUTBOUND' ? 'transform scale-x-[-1]' : ''}`} />
+      </div>
+
+      <div className="flex-1 flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-xl font-bold text-white">{dock.dockNumber}</h3>
+            {dock.isRefrigerated && (
+              <span title="Doca Refrigerada" className="bg-cyan-500/20 text-cyan-400 p-1 rounded-md">
+                <Snowflake className="w-3 h-3" />
+              </span>
+            )}
+          </div>
+          <div className="text-xs font-mono text-slate-500">
+            LOC_Y: {dock.locationY}m
+          </div>
+        </div>
+
+        <Badge variant="outline" className={`px-3 py-1 font-bold ${badgeColor}`}>
+          {dock.status}
+        </Badge>
       </div>
     </div>
   );

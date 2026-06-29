@@ -17,7 +17,7 @@ function App() {
           <Button variant="ghost" className="text-white hover:text-slate-900">Fila do Operador</Button>
         </Link>
         <Link to="/schedule">
-          <Button variant="ghost" className="text-white hover:text-slate-900">Agenda (Shiptify)</Button>
+          <Button variant="ghost" className="text-white hover:text-slate-900">Agenda</Button>
         </Link>
         <Link to="/dashboard">
           <Button variant="ghost" className="text-white hover:text-slate-900">Visão Geral (Armazém)</Button>

@@ -48,6 +48,10 @@ func (s *Service) ClosestEmptyOutboundDock(ctx context.Context, locationX, locat
 
 	for i := range docks {
 		dock := &docks[i]
+		if dock.Status != domain.DockStatusAvailable {
+			continue
+		}
+		
 		dx := float64(dock.LocationX - locationX)
 		dy := float64(dock.LocationY - locationY)
 		distance := math.Sqrt(dx*dx + dy*dy)

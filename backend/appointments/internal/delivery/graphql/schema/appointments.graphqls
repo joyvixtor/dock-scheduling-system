@@ -7,6 +7,8 @@ type Appointment @key(fields: "id") {
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
 }
@@ -24,6 +26,8 @@ input CreateAppointmentInput {
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
 }
 
@@ -33,4 +37,5 @@ type Query {
 
 type Mutation {
   createAppointment(input: CreateAppointmentInput!): Appointment!
+  updateAppointmentStatus(id: ID!, status: AppointmentStatus!): Appointment!
 }

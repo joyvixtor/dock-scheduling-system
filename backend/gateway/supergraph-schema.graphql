@@ -29,6 +29,8 @@ type Appointment
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
 }
@@ -50,6 +52,8 @@ input CreateAppointmentInput
   referenceCode: String!
   startTime: String!
   endTime: String!
+  sku: String!
+  quantity: Int!
   palletsCount: Int!
 }
 
@@ -102,6 +106,7 @@ type Mutation
   @join__type(graph: CROSSDOCK)
 {
   createAppointment(input: CreateAppointmentInput!): Appointment! @join__field(graph: APPOINTMENTS)
+  updateAppointmentStatus(id: ID!, status: AppointmentStatus!): Appointment! @join__field(graph: APPOINTMENTS)
   scanInboundPallet(sku: String!, quantity: Int!, inboundDockId: String!): TransferTask @join__field(graph: CROSSDOCK)
   assignOperator(taskId: ID!, operatorId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
   completeTransfer(taskId: ID!): TransferTask! @join__field(graph: CROSSDOCK)

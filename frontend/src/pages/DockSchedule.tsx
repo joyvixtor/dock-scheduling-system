@@ -1,4 +1,5 @@
-import { useQuery, gql } from '@apollo/client';
+import { useState } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import { Loader2, ServerCrash, Calendar as CalendarIcon, Package } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -21,20 +22,42 @@ const GET_SCHEDULE = gql`
       referenceCode
       startTime
       endTime
+      sku
+      quantity
       palletsCount
       status
     }
   }
 `;
 
+const UPDATE_APPT_STATUS = gql`
+  mutation UpdateAppointmentStatus($id: ID!, $status: AppointmentStatus!) {
+    updateAppointmentStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
+
+const SCAN_INBOUND = gql`
+  mutation ScanInboundPallet($sku: String!, $quantity: Int!, $inboundDockId: String!) {
+    scanInboundPallet(sku: $sku, quantity: $quantity, inboundDockId: $inboundDockId) {
+      id
+    }
+  }
+`;
+
 export default function DockSchedule() {
-  // Using the mocked date from our DB seed for demonstration
   const currentDate = "2026-06-29"; 
+  const [selectedAppt, setSelectedAppt] = useState<any>(null);
   
-  const { data, loading, error } = useQuery(GET_SCHEDULE, {
+  const { data, loading, error, refetch } = useQuery(GET_SCHEDULE, {
     variables: { date: currentDate },
     pollInterval: 5000,
   } as any);
+
+  const [updateStatus, { loading: updating }] = useMutation(UPDATE_APPT_STATUS);
+  const [scanInbound, { loading: scanning }] = useMutation(SCAN_INBOUND);
 
   if (loading && !data) {
     return (
@@ -66,8 +89,8 @@ export default function DockSchedule() {
   const appointments = data?.appointmentsByDate || [];
 
   // Define time range (e.g. 7 AM to 6 PM) in 15 minute increments.
-  const startHour = 7;
-  const endHour = 18;
+  const startHour = 0;
+  const endHour = 24;
   const timeSlots: string[] = [];
   
   for (let h = startHour; h <= endHour; h++) {
@@ -178,6 +201,7 @@ export default function DockSchedule() {
             return (
               <div
                 key={appt.id}
+                onClick={() => setSelectedAppt(appt)}
                 className={`${bgClass} m-[2px] rounded border border-black/20 shadow-sm overflow-hidden flex flex-col p-1.5 hover:brightness-110 cursor-pointer transition-all hover:scale-[1.02] hover:z-40 hover:shadow-xl`}
                 style={{
                   gridColumn: colIndex + 2,
@@ -206,6 +230,62 @@ export default function DockSchedule() {
 
         </div>
       </div>
+
+      {selectedAppt && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-[#1e272e] p-6 rounded-xl border border-slate-700 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Check-in de Caminhão</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              O caminhão <strong>{selectedAppt.carrier}</strong> ({selectedAppt.referenceCode}) chegou na doca? 
+            </p>
+            <div className="bg-slate-900/50 p-4 rounded-lg mb-6 border border-slate-700/50">
+              <div className="text-sm text-slate-300"><strong>SKU:</strong> {selectedAppt.sku}</div>
+              <div className="text-sm text-slate-300"><strong>Qtd:</strong> {selectedAppt.quantity} un. ({selectedAppt.palletsCount} PLT)</div>
+              <div className="text-sm text-slate-300"><strong>Status:</strong> {selectedAppt.status}</div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setSelectedAppt(null)}
+                className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                disabled={updating || scanning}
+              >
+                Cancelar
+              </button>
+              {selectedAppt.status === 'SCHEDULED' && (
+                <button 
+                  onClick={async () => {
+                    try {
+                      await updateStatus({ variables: { id: selectedAppt.id, status: "ARRIVED" } });
+                      
+                      // Identify if dock is Inbound
+                      const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
+                      if (isInbound && selectedAppt.sku) {
+                        await scanInbound({ 
+                          variables: { 
+                            sku: selectedAppt.sku, 
+                            quantity: selectedAppt.quantity, 
+                            inboundDockId: selectedAppt.dockId 
+                          } 
+                        });
+                      }
+                      
+                      refetch();
+                      setSelectedAppt(null);
+                    } catch (e: any) {
+                      alert("Erro: " + e.message);
+                    }
+                  }}
+                  disabled={updating || scanning}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {(updating || scanning) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirmar Chegada
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
