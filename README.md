@@ -1,35 +1,47 @@
-# Davenport Dock Scheduling System
+# 🚚 Davenport Dock Scheduling & Crossdocking System
 
-Sistema de logística avançado desenhado com microsserviços em **Go** e orquestrado por um **GraphQL Supergraph** (Apollo Federation).
+Bem-vindo ao **Davenport Dock Scheduling**, um sistema avançado de gestão logística e orquestração de pátios (Yard Management). Este projeto modela o fluxo de ponta a ponta de um centro de distribuição logístico altamente movimentado.
 
-Este repositório serve como a espinha dorsal de um centro de distribuição e logística, gerindo entradas (Inbound Docks), pedidos pendentes e em progresso (Orders), e as tarefas de cruzamento e transferência (Crossdocking) dentro do armazém.
+## 🌟 Arquitetura
+
+O sistema é dividido em duas grandes partes:
+
+1. **Backend (Supergraph GraphQL Federation):**
+   Composto por **5 microsserviços em Go (Golang)** totalmente independentes. Cada um possui seu próprio banco de dados PostgreSQL.
+   Eles são unidos por um **Gateway Apollo Router (Rust)** que expõe uma única API GraphQL unificada na porta `:8000`.
+   - `Appointments`: Gerencia agendamentos de caminhões (Check-in/Checkout).
+   - `Inbound`: Gerencia as 31 docas de entrada físicas.
+   - `Outbound`: Gerencia as 31 docas de saída físicas.
+   - `Crossdock`: O cérebro orquestrador. Roteia paletes do Inbound para o Outbound dinamicamente.
+   - `Orders`: (Opcional) Gerencia pedidos corporativos e SKUs.
+
+2. **Frontend (Portal React):**
+   Um aplicativo de interface gráfica rico desenvolvido com **React, Vite e TailwindCSS**. Ele oferece visões de comando exclusivas para Gerentes de Pátio e Operadores de Empilhadeira, consumindo dados do Gateway GraphQL.
 
 ## 🚀 Como Rodar o Projeto
 
-Para subir toda a infraestrutura e os subgrafos (com live-reload nativo e roteamento automático pelo Gateway), utilizamos um Makefile unificado.
+Para subir toda a infraestrutura localmente com suporte a *live-reload* nos microsserviços:
 
-**Requisitos**:
-- Docker & Docker Compose
-- Go 1.25+
-- Make
+### 1. Iniciar o Backend
+Abra uma janela do terminal e execute:
+```bash
+cd backend
+make dev
+```
+> O comando mágico `make dev` sobe todos os contêineres do PostgreSQL no Docker, compila o Supergrafo do GraphQL, levanta o Apollo Router na porta `:8000` e dispara todos os 5 microsserviços Go utilizando o **Air** para hot-reload.
 
-1. **Baixe as dependências e inicie o ambiente:**
-   Entre na pasta `backend/` e rode:
-   ```bash
-   make dev
-   ```
+### 2. Iniciar o Frontend
+Em outra janela do terminal, execute:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+> O painel administrativo estará disponível em `http://localhost:5173`.
 
-Este único comando irá:
-1. Subir as três instâncias de banco de dados (Postgres) via Docker.
-2. Compor o Supergrafo unificando todos os esquemas GraphQL espalhados pelas pastas dos subgrafos.
-3. Iniciar os três serviços Go (`orders`, `inbound`, `crossdock`) com suporte a hot-reload via **Air**.
-4. Fazer o download e rodar o **Apollo Router Gateway** na porta `8000`, pronto para receber consultas!
+## 📚 Documentação Adicional
 
-## 📚 Documentação
+Documentações profundas da arquitetura, subgrafos e decisões técnicas podem ser encontradas nas pastas de `docs` de cada pacote:
 
-A documentação aprofundada da arquitetura pode ser encontrada dentro do diretório `backend/docs/`.
-- [Arquitetura Geral](backend/docs/architecture.md)
-- [Gateway e Supergrafo](backend/docs/supergraph.md)
-- [Subgrafo Orders](backend/docs/subgraphs/orders.md)
-- [Subgrafo Inbound](backend/docs/subgraphs/inbound.md)
-- [Subgrafo Crossdock](backend/docs/subgraphs/crossdock.md)
+- **[Documentação do Backend (GraphQL & Arquitetura)](backend/docs/architecture_overview.md)**
+- **[Documentação do Frontend (React & UX)](frontend/docs/frontend_overview.md)**
