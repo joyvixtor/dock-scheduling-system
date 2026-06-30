@@ -136,8 +136,8 @@ export default function GateCheckIn() {
             Seu agendamento foi registrado com sucesso na plataforma Davenport.
           </p>
           <div className="flex gap-4 w-full">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700"
               onClick={() => {
                 setIsSuccess(false);
@@ -163,7 +163,7 @@ export default function GateCheckIn() {
   return (
     <div className="flex min-h-[calc(100vh-80px)] bg-[#2f3942] p-8">
       <div className="w-full max-w-3xl mx-auto">
-        
+
         {/* Header */}
         <div className="mb-10 text-center">
           <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-cyan-500/10 mb-4 ring-1 ring-cyan-500/20 shadow-lg shadow-cyan-500/5">
@@ -177,13 +177,13 @@ export default function GateCheckIn() {
 
         {/* Form Card */}
         <form onSubmit={handleSubmit} className="bg-[#1e272e] rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden backdrop-blur-sm">
-          
+
           <div className="bg-slate-800/50 px-8 py-5 border-b border-slate-700/50 flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-200">Novo Agendamento</h3>
           </div>
 
           <div className="p-8 space-y-8">
-            
+
             {/* Sec 1: Data e Hora */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function GateCheckIn() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-900/40 p-5 rounded-xl border border-slate-700/50">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Data (DD/MM/YYYY)</label>
-                  <input 
+                  <input
                     type="text"
                     required
                     placeholder="29/06/2026"
@@ -205,7 +205,7 @@ export default function GateCheckIn() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Hora Chegada</label>
-                  <input 
+                  <input
                     type="time"
                     required
                     value={startTime}
@@ -215,7 +215,7 @@ export default function GateCheckIn() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Hora Saída</label>
-                  <input 
+                  <input
                     type="time"
                     required
                     value={endTime}
@@ -232,10 +232,10 @@ export default function GateCheckIn() {
                 <Factory className="w-4 h-4" /> 2. Doca e Carga
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-5 rounded-xl border border-slate-700/50">
-                
+
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium text-slate-300">Doca Solicitada</label>
-                  <select 
+                  <select
                     required
                     value={dockId}
                     onChange={(e) => setDockId(e.target.value)}
@@ -257,7 +257,7 @@ export default function GateCheckIn() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">SKU da Mercadoria</label>
-                  <input 
+                  <input
                     type="text"
                     required
                     placeholder="Ex: SKU-9922"
@@ -266,10 +266,10 @@ export default function GateCheckIn() {
                     className="w-full bg-[#2f3942] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Quantidade</label>
-                  <input 
+                  <input
                     type="number"
                     required
                     min="1"
@@ -290,7 +290,7 @@ export default function GateCheckIn() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-5 rounded-xl border border-slate-700/50">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Transportadora</label>
-                  <input 
+                  <input
                     type="text"
                     required
                     placeholder="Ex: FedEx Freight"
@@ -301,7 +301,7 @@ export default function GateCheckIn() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Cód. Referência (AWB/BOL)</label>
-                  <input 
+                  <input
                     type="text"
                     required
                     placeholder="Ex: 4099120"
@@ -316,8 +316,8 @@ export default function GateCheckIn() {
           </div>
 
           <div className="bg-slate-800/80 px-8 py-5 border-t border-slate-700/50 flex justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={submitting}
               className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-6 px-10 shadow-lg shadow-cyan-500/20 transition-all w-full md:w-auto text-lg rounded-xl"
             >

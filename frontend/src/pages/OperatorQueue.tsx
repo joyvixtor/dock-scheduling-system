@@ -96,14 +96,15 @@ export default function OperatorQueue() {
   const pendingTasks = tasks.filter(t => t.status !== 'COMPLETED');
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">Fila do Operador</h1>
-        <Badge variant="secondary" className="text-sm">Operador Logado: {STATIC_OPERATOR_ID}</Badge>
-      </div>
+    <div className="min-h-[calc(100vh-80px)] bg-[#2f3942] p-6 text-slate-100">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Fila do Operador</h1>
+          <Badge variant="secondary" className="text-sm bg-slate-800 text-cyan-400 border border-slate-700 hover:bg-slate-700">Operador Logado: {STATIC_OPERATOR_ID}</Badge>
+        </div>
 
       {pendingTasks.length === 0 ? (
-        <Card className="bg-slate-50 border-dashed">
+        <Card className="bg-[#1e272e] border-dashed border-slate-700 shadow-xl">
           <CardContent className="flex flex-col items-center justify-center h-48 text-slate-400">
             <p className="text-lg">Nenhuma tarefa pendente no momento.</p>
           </CardContent>
@@ -115,39 +116,39 @@ export default function OperatorQueue() {
             const isTransit = task.status === 'TRANSIT';
 
             return (
-              <Card key={task.id} className={`shadow-md transition-shadow hover:shadow-lg ${isTransit ? 'border-blue-300 bg-blue-50/30' : ''}`}>
-                <CardHeader className="pb-3">
+              <Card key={task.id} className={`shadow-xl transition-all hover:scale-[1.02] border-slate-700/50 ${isTransit ? 'border-blue-500/50 bg-blue-900/20' : 'bg-[#1e272e]'}`}>
+                <CardHeader className="pb-3 border-b border-slate-800">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg font-bold font-mono text-slate-800">{task.sku}</CardTitle>
-                    <Badge variant={isTransit ? "default" : "outline"} className={isTransit ? "bg-blue-600" : ""}>
+                    <CardTitle className="text-lg font-bold font-mono text-white">{task.sku}</CardTitle>
+                    <Badge variant={isTransit ? "default" : "outline"} className={isTransit ? "bg-blue-600 text-white border-none shadow-lg shadow-blue-500/20" : "text-slate-300 border-slate-600"}>
                       {isTransit ? "EM TRÂNSITO" : "AGUARDANDO"}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 pt-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Quantidade:</span>
-                    <span className="font-semibold">{task.quantity} cx</span>
+                    <span className="text-slate-400">Quantidade:</span>
+                    <span className="font-semibold text-slate-200">{task.quantity} cx</span>
                   </div>
                   <div className="flex justify-between text-sm items-center gap-2">
-                    <span className="text-slate-500 whitespace-nowrap">De (Inbound):</span>
-                    <span className="font-semibold text-amber-700 truncate" title={task.inboundDockId}>{task.inboundDockId}</span>
+                    <span className="text-slate-400 whitespace-nowrap">De (Inbound):</span>
+                    <span className="font-semibold text-indigo-400 truncate" title={task.inboundDockId}>{task.inboundDockId}</span>
                   </div>
                   <div className="flex justify-between text-sm items-center gap-2">
-                    <span className="text-slate-500 whitespace-nowrap">Para (Outbound):</span>
-                    <span className="font-semibold text-emerald-700 truncate" title={task.outboundDockId || "A Definir"}>{task.outboundDockId || "A Definir"}</span>
+                    <span className="text-slate-400 whitespace-nowrap">Para (Outbound):</span>
+                    <span className="font-semibold text-fuchsia-400 truncate" title={task.outboundDockId || "A Definir"}>{task.outboundDockId || "A Definir"}</span>
                   </div>
                   {isTransit && (
-                    <div className="flex justify-between text-xs mt-2 pt-2 border-t text-slate-500">
+                    <div className="flex justify-between text-xs mt-3 pt-3 border-t border-slate-800 text-slate-400">
                       <span>Operador Responsável:</span>
-                      <span className="font-semibold text-slate-700">{task.operatorId}</span>
+                      <span className="font-semibold text-cyan-400">{task.operatorId}</span>
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="pt-2">
                   {!isTransit ? (
                     <Button
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+                      className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-colors shadow-lg shadow-cyan-500/10"
                       disabled={assigning || (task.operatorId != null && task.operatorId !== STATIC_OPERATOR_ID)}
                       onClick={() => assignOperator({ variables: { taskId: task.id, operatorId: STATIC_OPERATOR_ID } } as any)}
                     >
@@ -155,7 +156,7 @@ export default function OperatorQueue() {
                     </Button>
                   ) : (
                     <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors shadow-lg shadow-emerald-500/10"
                       disabled={completing || !isAssignedToMe}
                       onClick={() => completeTransfer({ variables: { taskId: task.id } } as any)}
                     >
@@ -168,6 +169,7 @@ export default function OperatorQueue() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
