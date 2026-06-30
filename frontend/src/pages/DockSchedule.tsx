@@ -74,7 +74,7 @@ const COMPLETE_ORDER = gql`
 `;
 
 export default function DockSchedule() {
-  const currentDate = "2026-06-29";
+  const currentDate = new Date().toISOString().split('T')[0];
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
 
   const { data, loading, error, refetch } = useQuery(GET_SCHEDULE, {
