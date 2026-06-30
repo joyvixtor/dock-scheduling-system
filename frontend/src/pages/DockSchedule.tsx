@@ -275,20 +275,24 @@ export default function DockSchedule() {
                 <button 
                   onClick={async () => {
                     try {
+                      const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
+                      
+                      // 1. Validate Demand via Crossdock first
+                      if (isInbound && selectedAppt.sku) {
+                        await scanInbound({ 
+                          variables: { 
+                            sku: selectedAppt.sku, 
+                            quantity: selectedAppt.quantity, 
+                            inboundDockId: selectedAppt.dockId 
+                          } 
+                        });
+                      }
+
+                      // 2. If it reaches here, demand exists! Now we can safely commit physical state changes
                       await updateStatus({ variables: { id: selectedAppt.id, status: "ARRIVED" } });
                       
-                      const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
                       if (isInbound) {
                         await updateInbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
-                        if (selectedAppt.sku) {
-                          await scanInbound({ 
-                            variables: { 
-                              sku: selectedAppt.sku, 
-                              quantity: selectedAppt.quantity, 
-                              inboundDockId: selectedAppt.dockId 
-                            } 
-                          });
-                        }
                       } else {
                         await updateOutbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
                       }
@@ -296,7 +300,8 @@ export default function DockSchedule() {
                       refetch();
                       setSelectedAppt(null);
                     } catch (e: any) {
-                      alert("Erro: " + e.message);
+                      // If scanInbound fails (e.g. "no pending demand"), it gets caught here BEFORE state changes!
+                      alert("Operação Bloqueada: " + e.message.replace("HTTP fetch failed from 'crossdock': ", ""));
                     }
                   }}
                   disabled={isBusy}

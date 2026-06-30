@@ -16,4 +16,9 @@ enum OrderStatus {
 type Query {
   pendingDemandBySku(sku: String!): Int!
   pendingOrders(sku: String!): [Order!]!
+  allPendingOrders: [Order!]!
+}
+
+type Mutation {
+  createOrder(sku: String!, quantity: Int!): Order!
 }

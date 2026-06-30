@@ -105,6 +105,7 @@ type Mutation
   @join__type(graph: APPOINTMENTS)
   @join__type(graph: CROSSDOCK)
   @join__type(graph: INBOUND)
+  @join__type(graph: ORDERS)
   @join__type(graph: OUTBOUND)
 {
   createAppointment(input: CreateAppointmentInput!): Appointment! @join__field(graph: APPOINTMENTS)
@@ -113,6 +114,7 @@ type Mutation
   assignOperator(taskId: ID!, operatorId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
   completeTransfer(taskId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
   updateInboundDockStatus(id: ID!, status: DockStatus!): InboundDock @join__field(graph: INBOUND)
+  createOrder(sku: String!, quantity: Int!): Order! @join__field(graph: ORDERS)
   updateOutboundDockStatus(id: ID!, status: DockStatus!): OutboundDock @join__field(graph: OUTBOUND)
 }
 
@@ -168,6 +170,7 @@ type Query
   inboundDockById(id: String!): InboundDock @join__field(graph: INBOUND)
   pendingDemandBySku(sku: String!): Int! @join__field(graph: ORDERS)
   pendingOrders(sku: String!): [Order!]! @join__field(graph: ORDERS)
+  allPendingOrders: [Order!]! @join__field(graph: ORDERS)
   activeOutboundDocks: [OutboundDock!]! @join__field(graph: OUTBOUND)
   closestEmptyOutboundDock(locationX: Int!, locationY: Int!): OutboundDock @join__field(graph: OUTBOUND)
 }

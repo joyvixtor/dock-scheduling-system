@@ -32,6 +32,18 @@ func (r *Repository) PendingDemandBySKU(ctx context.Context, sku string) (int, e
 	return int(total), nil
 }
 
+func (r *Repository) CreateOrder(ctx context.Context, order *domain.Order) error {
+	const query = `
+		INSERT INTO orders (id, sku, quantity, status)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err := r.pool.Exec(ctx, query, order.ID, order.SKU, order.Quantity, string(order.Status))
+	if err != nil {
+		return fmt.Errorf("create order: %w", err)
+	}
+	return nil
+}
+
 func (r *Repository) PendingOrdersBySKU(ctx context.Context, sku string) ([]domain.Order, error) {
 	const query = `
 		SELECT id, sku, quantity, status
@@ -59,6 +71,38 @@ func (r *Repository) PendingOrdersBySKU(ctx context.Context, sku string) ([]doma
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate pending orders: %w", err)
+	}
+
+	return orders, nil
+}
+
+func (r *Repository) AllPendingOrders(ctx context.Context) ([]domain.Order, error) {
+	const query = `
+		SELECT id, sku, quantity, status
+		FROM orders
+		WHERE status = 'PENDING_BACKORDER'
+		ORDER BY id DESC
+	`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("query all pending orders: %w", err)
+	}
+	defer rows.Close()
+
+	orders := make([]domain.Order, 0)
+	for rows.Next() {
+		var order domain.Order
+		var status string
+		if err := rows.Scan(&order.ID, &order.SKU, &order.Quantity, &status); err != nil {
+			return nil, fmt.Errorf("scan pending order: %w", err)
+		}
+		order.Status = domain.OrderStatus(status)
+		orders = append(orders, order)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate all pending orders: %w", err)
 	}
 
 	return orders, nil

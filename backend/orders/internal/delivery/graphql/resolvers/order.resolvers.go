@@ -12,6 +12,11 @@ import (
 	"github.com/joyvixtor/dock-scheduling-system/backend/orders/internal/domain"
 )
 
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, sku string, quantity int) (*domain.Order, error) {
+	return r.OrderService.CreateOrder(ctx, sku, quantity)
+}
+
 // PendingDemandBySku is the resolver for the pendingDemandBySku field.
 func (r *queryResolver) PendingDemandBySku(ctx context.Context, sku string) (int, error) {
 	return r.OrderService.PendingDemandBySKU(ctx, sku)
@@ -33,7 +38,29 @@ func (r *queryResolver) PendingOrders(ctx context.Context, sku string) ([]*domai
 	return result, nil
 }
 
+// AllPendingOrders is the resolver for the allPendingOrders field.
+func (r *queryResolver) AllPendingOrders(ctx context.Context) ([]*domain.Order, error) {
+	orders, err := r.OrderService.AllPendingOrders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*domain.Order, 0, len(orders))
+	for i := range orders {
+		order := orders[i]
+		result = append(result, &order)
+	}
+
+	return result, nil
+}
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

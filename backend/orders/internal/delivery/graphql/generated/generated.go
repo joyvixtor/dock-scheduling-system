@@ -30,6 +30,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Entity() EntityResolver
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -41,6 +42,10 @@ type ComplexityRoot struct {
 		FindOrderByID func(childComplexity int, id string) int
 	}
 
+	Mutation struct {
+		CreateOrder func(childComplexity int, sku string, quantity int) int
+	}
+
 	Order struct {
 		ID       func(childComplexity int) int
 		Quantity func(childComplexity int) int
@@ -49,6 +54,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AllPendingOrders   func(childComplexity int) int
 		PendingDemandBySku func(childComplexity int, sku string) int
 		PendingOrders      func(childComplexity int, sku string) int
 		__resolve__service func(childComplexity int) int
@@ -67,9 +73,13 @@ type ComplexityRoot struct {
 type EntityResolver interface {
 	FindOrderByID(ctx context.Context, id string) (*domain.Order, error)
 }
+type MutationResolver interface {
+	CreateOrder(ctx context.Context, sku string, quantity int) (*domain.Order, error)
+}
 type QueryResolver interface {
 	PendingDemandBySku(ctx context.Context, sku string) (int, error)
 	PendingOrders(ctx context.Context, sku string) ([]*domain.Order, error)
+	AllPendingOrders(ctx context.Context) ([]*domain.Order, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -102,6 +112,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Entity.FindOrderByID(childComplexity, args["id"].(string)), true
 
+	case "Mutation.createOrder":
+		if e.ComplexityRoot.Mutation.CreateOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOrder_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateOrder(childComplexity, args["sku"].(string), args["quantity"].(int)), true
+
 	case "Order.id":
 		if e.ComplexityRoot.Order.ID == nil {
 			break
@@ -126,6 +148,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Order.Status(childComplexity), true
+
+	case "Query.allPendingOrders":
+		if e.ComplexityRoot.Query.AllPendingOrders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AllPendingOrders(childComplexity), true
 
 	case "Query.pendingDemandBySku":
 		if e.ComplexityRoot.Query.PendingDemandBySku == nil {
@@ -215,6 +244,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 
 			return &response
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -259,6 +303,11 @@ enum OrderStatus {
 type Query {
   pendingDemandBySku(sku: String!): Int!
   pendingOrders(sku: String!): [Order!]!
+  allPendingOrders: [Order!]!
+}
+
+type Mutation {
+  createOrder(sku: String!, quantity: Int!): Order!
 }`, BuiltIn: false},
 	{Name: "../../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
@@ -488,6 +537,28 @@ func (ec *executionContext) field_Entity_findOrderByID_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createOrder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sku",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["sku"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "quantity",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNInt2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["quantity"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -642,6 +713,50 @@ func (ec *executionContext) fieldContext_Entity_findOrderByID(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Entity_findOrderByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateOrder(ctx, fc.Args["sku"].(string), fc.Args["quantity"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *domain.Order) graphql.Marshaler {
+			return ec.marshalNOrder2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋordersᚋinternalᚋdomainᚐOrder(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Order(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -824,6 +939,38 @@ func (ec *executionContext) fieldContext_Query_pendingOrders(ctx context.Context
 	if fc.Args, err = ec.field_Query_pendingOrders_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_allPendingOrders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_allPendingOrders(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().AllPendingOrders(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*domain.Order) graphql.Marshaler {
+			return ec.marshalNOrder2ᚕᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋordersᚋinternalᚋdomainᚐOrderᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_allPendingOrders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Order(ctx, field)
+		},
 	}
 	return fc, nil
 }
@@ -2153,6 +2300,54 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 	return out
 }
 
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "createOrder":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createOrder(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var orderImplementors = []string{"Order", "_Entity"}
 
 func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, obj *domain.Order) graphql.Marshaler {
@@ -2258,6 +2453,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_pendingOrders(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "allPendingOrders":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_allPendingOrders(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

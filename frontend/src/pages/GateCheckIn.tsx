@@ -107,7 +107,7 @@ export default function GateCheckIn() {
             endTime: endDateTime
           }
         }
-      });
+      } as any);
 
       setIsSuccess(true);
       toast({
