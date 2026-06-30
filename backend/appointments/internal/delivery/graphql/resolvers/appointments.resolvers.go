@@ -7,6 +7,8 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/joyvixtor/dock-scheduling-system/backend/appointments/internal/delivery/graphql/generated"
 	"github.com/joyvixtor/dock-scheduling-system/backend/appointments/internal/domain"
@@ -22,9 +24,22 @@ func (r *appointmentResolver) EndTime(ctx context.Context, obj *domain.Appointme
 	return obj.EndTime.UTC().Format("2006-01-02T15:04:05Z"), nil
 }
 
+// OrderID is the resolver for the orderId field.
+func (r *appointmentResolver) OrderID(ctx context.Context, obj *domain.Appointment) (*string, error) {
+	return obj.OrderID, nil
+}
+
 // CreateAppointment is the resolver for the createAppointment field.
 func (r *mutationResolver) CreateAppointment(ctx context.Context, input domain.CreateAppointmentInput) (*domain.Appointment, error) {
-	return r.Service.CreateAppointment(ctx, input)
+	appt, err := r.Service.CreateAppointment(ctx, input)
+	if err != nil {
+		fmt.Printf("ERROR in CreateAppointment: %v\n", err)
+		import_os_err := err.Error()
+		_ = ctx // avoid unused ctx
+		// Write to a local file in the workspace
+		_ = os.WriteFile("appt_err.txt", []byte(import_os_err), 0644)
+	}
+	return appt, err
 }
 
 // UpdateAppointmentStatus is the resolver for the updateAppointmentStatus field.
@@ -37,6 +52,12 @@ func (r *queryResolver) AppointmentsByDate(ctx context.Context, date string) ([]
 	return r.Service.GetAppointmentsByDate(ctx, date)
 }
 
+// OrderID is the resolver for the orderId field.
+func (r *createAppointmentInputResolver) OrderID(ctx context.Context, obj *domain.CreateAppointmentInput, data *string) error {
+	obj.OrderID = data
+	return nil
+}
+
 // Appointment returns generated.AppointmentResolver implementation.
 func (r *Resolver) Appointment() generated.AppointmentResolver { return &appointmentResolver{r} }
 
@@ -46,8 +67,14 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// CreateAppointmentInput returns generated.CreateAppointmentInputResolver implementation.
+func (r *Resolver) CreateAppointmentInput() generated.CreateAppointmentInputResolver {
+	return &createAppointmentInputResolver{r}
+}
+
 type (
-	appointmentResolver struct{ *Resolver }
-	mutationResolver    struct{ *Resolver }
-	queryResolver       struct{ *Resolver }
+	appointmentResolver            struct{ *Resolver }
+	mutationResolver               struct{ *Resolver }
+	queryResolver                  struct{ *Resolver }
+	createAppointmentInputResolver struct{ *Resolver }
 )

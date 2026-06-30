@@ -14,6 +14,7 @@ type OrderRepository interface {
 	AllPendingOrders(ctx context.Context) ([]domain.Order, error)
 	FindByID(ctx context.Context, id string) (*domain.Order, error)
 	CreateOrder(ctx context.Context, order *domain.Order) error
+	CompleteOrder(ctx context.Context, id string) error
 }
 
 type Service struct {
@@ -49,6 +50,18 @@ func (s *Service) CreateOrder(ctx context.Context, sku string, quantity int) (*d
 	}
 
 	return order, nil
+}
+
+func (s *Service) CompleteOrder(ctx context.Context, id string) (*domain.Order, error) {
+	if id == "" {
+		return nil, fmt.Errorf("id is required")
+	}
+
+	if err := s.repo.CompleteOrder(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return s.repo.FindByID(ctx, id)
 }
 
 func (s *Service) PendingOrdersBySKU(ctx context.Context, sku string) ([]domain.Order, error) {

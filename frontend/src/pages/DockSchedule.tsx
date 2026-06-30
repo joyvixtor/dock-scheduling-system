@@ -26,6 +26,7 @@ const GET_SCHEDULE = gql`
       quantity
       palletsCount
       status
+      orderId
     }
   }
 `;
@@ -63,10 +64,19 @@ const UPDATE_OUTBOUND = gql`
   }
 `;
 
+const COMPLETE_ORDER = gql`
+  mutation CompleteOrder($id: ID!) {
+    completeOrder(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
 export default function DockSchedule() {
-  const currentDate = "2026-06-29"; 
+  const currentDate = "2026-06-29";
   const [selectedAppt, setSelectedAppt] = useState<any>(null);
-  
+
   const { data, loading, error, refetch } = useQuery(GET_SCHEDULE, {
     variables: { date: currentDate },
     pollInterval: 5000,
@@ -76,6 +86,7 @@ export default function DockSchedule() {
   const [scanInbound, { loading: scanning }] = useMutation(SCAN_INBOUND);
   const [updateInbound, { loading: upIn }] = useMutation(UPDATE_INBOUND);
   const [updateOutbound, { loading: upOut }] = useMutation(UPDATE_OUTBOUND);
+  const [completeOrder] = useMutation(COMPLETE_ORDER);
 
   const isBusy = updating || scanning || upIn || upOut;
 
@@ -112,7 +123,7 @@ export default function DockSchedule() {
   const startHour = 0;
   const endHour = 24;
   const timeSlots: string[] = [];
-  
+
   for (let h = startHour; h <= endHour; h++) {
     for (let m = 0; m < 60; m += 15) {
       const hh = h.toString().padStart(2, '0');
@@ -126,13 +137,13 @@ export default function DockSchedule() {
     const date = new Date(timeIsoString);
     const h = date.getUTCHours();
     const m = date.getUTCMinutes();
-    
+
     // Check if outside range
     if (h < startHour || h > endHour) return -1;
-    
+
     // Calculate 15-min blocks from startHour
     // +2 because Row 1 is header
-    const rowOffset = ((h - startHour) * 4) + Math.floor(m / 15) + 2; 
+    const rowOffset = ((h - startHour) * 4) + Math.floor(m / 15) + 2;
     return rowOffset;
   };
 
@@ -148,19 +159,19 @@ export default function DockSchedule() {
           <span className="text-slate-400 text-sm font-medium">| {currentDate}</span>
         </div>
         <div className="flex items-center gap-2 text-sm font-medium">
-           <div className="w-3 h-3 bg-[#10b981] rounded-full"></div> SCHEDULED
-           <div className="w-3 h-3 bg-[#3b82f6] rounded-full ml-3"></div> ARRIVED
-           <div className="w-3 h-3 bg-[#64748b] rounded-full ml-3"></div> COMPLETED
+          <div className="w-3 h-3 bg-[#10b981] rounded-full"></div> SCHEDULED
+          <div className="w-3 h-3 bg-[#3b82f6] rounded-full ml-3"></div> ARRIVED
+          <div className="w-3 h-3 bg-[#64748b] rounded-full ml-3"></div> COMPLETED
         </div>
       </div>
 
       {/* Main Grid Container */}
       <div className="flex-1 bg-[#2f3942] rounded-b-lg overflow-x-auto overflow-y-auto border border-slate-700 shadow-2xl relative">
-        
-        <div 
-          className="min-w-max" 
-          style={{ 
-            display: 'grid', 
+
+        <div
+          className="min-w-max"
+          style={{
+            display: 'grid',
             gridTemplateColumns: `80px repeat(${allDocks.length}, minmax(180px, 1fr))`,
             gridTemplateRows: `50px repeat(${timeSlots.length}, 40px)`
           }}
@@ -170,8 +181,8 @@ export default function DockSchedule() {
 
           {/* Docks Header Row */}
           {allDocks.map((dock, index) => (
-            <div 
-              key={dock.id} 
+            <div
+              key={dock.id}
               className="bg-[#242f36] sticky top-0 z-20 border-r border-b border-slate-700 flex flex-col items-center justify-center py-2"
               style={{ gridColumn: index + 2, gridRow: 1 }}
             >
@@ -184,8 +195,8 @@ export default function DockSchedule() {
 
           {/* Time Slots (Y-Axis Header) */}
           {timeSlots.map((time, index) => (
-            <div 
-              key={time} 
+            <div
+              key={time}
               className="bg-[#1e272e] sticky left-0 z-10 border-r border-b border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-300"
               style={{ gridColumn: 1, gridRow: index + 2 }}
             >
@@ -196,8 +207,8 @@ export default function DockSchedule() {
           {/* Background Grid Cells */}
           {timeSlots.map((_, rowIndex) => (
             allDocks.map((_, colIndex) => (
-              <div 
-                key={`${rowIndex}-${colIndex}`} 
+              <div
+                key={`${rowIndex}-${colIndex}`}
                 className="border-r border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors"
                 style={{ gridColumn: colIndex + 2, gridRow: rowIndex + 2 }}
               ></div>
@@ -209,14 +220,14 @@ export default function DockSchedule() {
             const startRow = getGridRow(appt.startTime);
             const endRow = getGridRow(appt.endTime);
             const colIndex = allDocks.findIndex(d => d.id === appt.dockId);
-            
+
             // Safety check if dock or time is out of grid
             if (colIndex === -1 || startRow === -1 || endRow === -1) return null;
 
             const bgClass = appt.status === 'SCHEDULED' ? 'bg-[#10b981]' // Green
               : appt.status === 'ARRIVED' ? 'bg-[#3b82f6]' // Blue
-              : appt.status === 'COMPLETED' ? 'bg-[#64748b]' // Gray
-              : 'bg-[#ef4444]'; // Red (Cancelled)
+                : appt.status === 'COMPLETED' ? 'bg-[#64748b]' // Gray
+                  : 'bg-[#ef4444]'; // Red (Cancelled)
 
             return (
               <div
@@ -256,7 +267,7 @@ export default function DockSchedule() {
           <div className="bg-[#1e272e] p-6 rounded-xl border border-slate-700 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-bold text-white mb-2">Check-in de Caminhão</h3>
             <p className="text-sm text-slate-400 mb-6">
-              O caminhão <strong>{selectedAppt.carrier}</strong> ({selectedAppt.referenceCode}) chegou na doca? 
+              O caminhão <strong>{selectedAppt.carrier}</strong> ({selectedAppt.referenceCode}) chegou na doca?
             </p>
             <div className="bg-slate-900/50 p-4 rounded-lg mb-6 border border-slate-700/50">
               <div className="text-sm text-slate-300"><strong>SKU:</strong> {selectedAppt.sku}</div>
@@ -264,7 +275,7 @@ export default function DockSchedule() {
               <div className="text-sm text-slate-300"><strong>Status:</strong> {selectedAppt.status}</div>
             </div>
             <div className="flex gap-3 justify-end">
-              <button 
+              <button
                 onClick={() => setSelectedAppt(null)}
                 className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                 disabled={isBusy}
@@ -272,31 +283,31 @@ export default function DockSchedule() {
                 Cancelar
               </button>
               {selectedAppt.status === 'SCHEDULED' && (
-                <button 
+                <button
                   onClick={async () => {
                     try {
                       const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
-                      
+
                       // 1. Validate Demand via Crossdock first
                       if (isInbound && selectedAppt.sku) {
-                        await scanInbound({ 
-                          variables: { 
-                            sku: selectedAppt.sku, 
-                            quantity: selectedAppt.quantity, 
-                            inboundDockId: selectedAppt.dockId 
-                          } 
-                        });
+                        await scanInbound({
+                          variables: {
+                            sku: selectedAppt.sku,
+                            quantity: selectedAppt.quantity,
+                            inboundDockId: selectedAppt.dockId
+                          }
+                        } as any);
                       }
 
                       // 2. If it reaches here, demand exists! Now we can safely commit physical state changes
-                      await updateStatus({ variables: { id: selectedAppt.id, status: "ARRIVED" } });
-                      
+                      await updateStatus({ variables: { id: selectedAppt.id, status: "ARRIVED" } } as any);
+
                       if (isInbound) {
-                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
+                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" } } as any);
                       } else {
-                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" }});
+                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "OCCUPIED" } } as any);
                       }
-                      
+
                       refetch();
                       setSelectedAppt(null);
                     } catch (e: any) {
@@ -312,18 +323,23 @@ export default function DockSchedule() {
                 </button>
               )}
               {selectedAppt.status === 'ARRIVED' && (
-                <button 
+                <button
                   onClick={async () => {
                     try {
-                      await updateStatus({ variables: { id: selectedAppt.id, status: "COMPLETED" } });
-                      
+                      await updateStatus({ variables: { id: selectedAppt.id, status: "COMPLETED" } } as any);
+
                       const isInbound = inbound.some((d: any) => d.id === selectedAppt.dockId);
                       if (isInbound) {
-                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" }});
+                        await updateInbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" } } as any);
                       } else {
-                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" }});
+                        await updateOutbound({ variables: { id: selectedAppt.dockId, status: "AVAILABLE" } } as any);
                       }
-                      
+
+                      // Soft delete / Complete the order from the customer orders backlog if it exists
+                      if (selectedAppt.orderId) {
+                        await completeOrder({ variables: { id: selectedAppt.orderId } } as any);
+                      }
+
                       refetch();
                       setSelectedAppt(null);
                     } catch (e: any) {

@@ -43,7 +43,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateOrder func(childComplexity int, sku string, quantity int) int
+		CompleteOrder func(childComplexity int, id string) int
+		CreateOrder   func(childComplexity int, sku string, quantity int) int
 	}
 
 	Order struct {
@@ -75,6 +76,7 @@ type EntityResolver interface {
 }
 type MutationResolver interface {
 	CreateOrder(ctx context.Context, sku string, quantity int) (*domain.Order, error)
+	CompleteOrder(ctx context.Context, id string) (*domain.Order, error)
 }
 type QueryResolver interface {
 	PendingDemandBySku(ctx context.Context, sku string) (int, error)
@@ -112,6 +114,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Entity.FindOrderByID(childComplexity, args["id"].(string)), true
 
+	case "Mutation.completeOrder":
+		if e.ComplexityRoot.Mutation.CompleteOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeOrder_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CompleteOrder(childComplexity, args["id"].(string)), true
 	case "Mutation.createOrder":
 		if e.ComplexityRoot.Mutation.CreateOrder == nil {
 			break
@@ -308,6 +321,7 @@ type Query {
 
 type Mutation {
   createOrder(sku: String!, quantity: Int!): Order!
+  completeOrder(id: ID!): Order!
 }`, BuiltIn: false},
 	{Name: "../../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
@@ -524,6 +538,20 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 // region    ***************************** args.gotpl *****************************
 
 func (ec *executionContext) field_Entity_findOrderByID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeOrder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -757,6 +785,50 @@ func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_completeOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CompleteOrder(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *domain.Order) graphql.Marshaler {
+			return ec.marshalNOrder2ᚖgithubᚗcomᚋjoyvixtorᚋdockᚑschedulingᚑsystemᚋbackendᚋordersᚋinternalᚋdomainᚐOrder(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_completeOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Order(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2323,6 +2395,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createOrder(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeOrder":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeOrder(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

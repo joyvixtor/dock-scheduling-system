@@ -6,19 +6,22 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
-const GET_DOCKS = gql`
-  query GetGateDocks {
+const GET_DATA = gql`
+  query GetCheckInData {
     activeInboundDocks {
       id
       dockNumber
-      isRefrigerated
       status
     }
     activeOutboundDocks {
       id
       dockNumber
-      isRefrigerated
       status
+    }
+    allPendingOrders {
+      id
+      sku
+      quantity
     }
   }
 `;
@@ -33,7 +36,7 @@ const CREATE_APPOINTMENT = gql`
 `;
 
 export default function GateCheckIn() {
-  const { data, loading, error } = useQuery(GET_DOCKS);
+  const { data, loading, error } = useQuery(GET_DATA);
   const [createAppointment, { loading: submitting }] = useMutation(CREATE_APPOINTMENT);
   const { toast } = useToast();
 
@@ -42,8 +45,7 @@ export default function GateCheckIn() {
   const [endTime, setEndTime] = useState("10:00");
   const [carrier, setCarrier] = useState("");
   const [referenceCode, setReferenceCode] = useState("");
-  const [sku, setSku] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState("");
   const [dockId, setDockId] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -71,17 +73,19 @@ export default function GateCheckIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !startTime || !endTime || !carrier || !referenceCode || !sku || !quantity || !dockId) {
+    if (!selectedOrderId) {
       toast({
         title: "Erro de Validação",
-        description: "Todos os campos são obrigatórios.",
+        description: "Você precisa selecionar um pedido pendente.",
         variant: "destructive"
       });
       return;
     }
 
+    const selectedOrder = data.allPendingOrders.find((o: any) => o.id === selectedOrderId);
+    if (!selectedOrder) return;
+
     try {
-      // Parse DD/MM/YYYY
       const parts = date.split('/');
       if (parts.length !== 3) {
         toast({ title: "Formato de Data Inválido", description: "Use DD/MM/YYYY", variant: "destructive" });
@@ -90,7 +94,6 @@ export default function GateCheckIn() {
       const [day, month, year] = parts;
       const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
-      // Assemble ISO8601 strings in UTC
       const startDateTime = `${isoDate}T${startTime}:00Z`;
       const endDateTime = `${isoDate}T${endTime}:00Z`;
 
@@ -100,11 +103,12 @@ export default function GateCheckIn() {
             dockId,
             carrier,
             referenceCode,
-            sku,
-            quantity: parseInt(quantity, 10),
-            palletsCount: Math.ceil(parseInt(quantity, 10) / 100),
+            sku: selectedOrder.sku,
+            quantity: selectedOrder.quantity,
+            palletsCount: Math.ceil(selectedOrder.quantity / 100),
             startTime: startDateTime,
-            endTime: endDateTime
+            endTime: endDateTime,
+            orderId: selectedOrder.id
           }
         }
       } as any);
@@ -143,8 +147,7 @@ export default function GateCheckIn() {
                 setIsSuccess(false);
                 setCarrier("");
                 setReferenceCode("");
-                setSku("");
-                setQuantity("");
+                setSelectedOrderId("");
               }}
             >
               Novo Agendamento
@@ -164,7 +167,6 @@ export default function GateCheckIn() {
     <div className="flex min-h-[calc(100vh-80px)] bg-[#2f3942] p-8">
       <div className="w-full max-w-3xl mx-auto">
 
-        {/* Header */}
         <div className="mb-10 text-center">
           <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-cyan-500/10 mb-4 ring-1 ring-cyan-500/20 shadow-lg shadow-cyan-500/5">
             <Truck className="h-8 w-8 text-cyan-400" />
@@ -175,7 +177,6 @@ export default function GateCheckIn() {
           </p>
         </div>
 
-        {/* Form Card */}
         <form onSubmit={handleSubmit} className="bg-[#1e272e] rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden backdrop-blur-sm">
 
           <div className="bg-slate-800/50 px-8 py-5 border-b border-slate-700/50 flex items-center justify-between">
@@ -184,7 +185,6 @@ export default function GateCheckIn() {
 
           <div className="p-8 space-y-8">
 
-            {/* Sec 1: Data e Hora */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="w-4 h-4" /> 1. Data e Horário
@@ -226,10 +226,10 @@ export default function GateCheckIn() {
               </div>
             </div>
 
-            {/* Sec 2: Doca e Carga */}
+            {/* Sec 2: Doca e Carga / Pedido */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                <Factory className="w-4 h-4" /> 2. Doca e Carga
+                <Factory className="w-4 h-4" /> 2. Doca e Pedido
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-5 rounded-xl border border-slate-700/50">
 
@@ -255,30 +255,23 @@ export default function GateCheckIn() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">SKU da Mercadoria</label>
-                  <input
-                    type="text"
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-slate-300">Pedido do Cliente</label>
+                  <select
                     required
-                    placeholder="Ex: SKU-9922"
-                    value={sku}
-                    onChange={(e) => setSku(e.target.value)}
-                    className="w-full bg-[#2f3942] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
-                  />
+                    value={selectedOrderId}
+                    onChange={(e) => setSelectedOrderId(e.target.value)}
+                    className="w-full bg-[#2f3942] border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all appearance-none"
+                  >
+                    <option value="" disabled>-- Selecione o Pedido Pendente --</option>
+                    {data?.allPendingOrders.map((order: any) => (
+                      <option key={order.id} value={order.id}>
+                        {order.sku} (Qtd: {order.quantity}) - Ref: {order.id.slice(0, 8)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Quantidade</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="Ex: 500"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full bg-[#2f3942] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
-                  />
-                </div>
               </div>
             </div>
 

@@ -17,6 +17,11 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, sku string, quantity
 	return r.OrderService.CreateOrder(ctx, sku, quantity)
 }
 
+// CompleteOrder is the resolver for the completeOrder field.
+func (r *mutationResolver) CompleteOrder(ctx context.Context, id string) (*domain.Order, error) {
+	return r.OrderService.CompleteOrder(ctx, id)
+}
+
 // PendingDemandBySku is the resolver for the pendingDemandBySku field.
 func (r *queryResolver) PendingDemandBySku(ctx context.Context, sku string) (int, error) {
 	return r.OrderService.PendingDemandBySKU(ctx, sku)

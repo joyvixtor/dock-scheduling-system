@@ -19,8 +19,8 @@ func NewRepository(db *pgxpool.Pool) domain.AppointmentsRepository {
 
 func (r *repository) Create(ctx context.Context, appt *domain.Appointment) error {
 	query := `
-		INSERT INTO appointments (id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO appointments (id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status, order_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 	_, err := r.db.Exec(ctx, query,
 		appt.ID,
@@ -33,6 +33,7 @@ func (r *repository) Create(ctx context.Context, appt *domain.Appointment) error
 		appt.Quantity,
 		appt.PalletsCount,
 		appt.Status,
+		appt.OrderID,
 	)
 	if err != nil {
 		return fmt.Errorf("insert appointment: %w", err)
@@ -60,7 +61,7 @@ func (r *repository) HasOverlap(ctx context.Context, dockID string, start, end t
 
 func (r *repository) FindByID(ctx context.Context, id string) (*domain.Appointment, error) {
 	query := `
-		SELECT id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status
+		SELECT id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status, order_id
 		FROM appointments
 		WHERE id = $1
 	`
@@ -76,6 +77,7 @@ func (r *repository) FindByID(ctx context.Context, id string) (*domain.Appointme
 		&a.Quantity,
 		&a.PalletsCount,
 		&a.Status,
+		&a.OrderID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("find appt by id: %w", err)
@@ -94,7 +96,7 @@ func (r *repository) UpdateStatus(ctx context.Context, id string, status domain.
 
 func (r *repository) FindByDate(ctx context.Context, startOfDay, endOfDay time.Time) ([]*domain.Appointment, error) {
 	query := `
-		SELECT id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status
+		SELECT id, dock_id, carrier, reference_code, start_time, end_time, sku, quantity, pallets_count, status, order_id
 		FROM appointments
 		WHERE start_time >= $1 AND start_time < $2
 		ORDER BY start_time ASC
@@ -119,6 +121,7 @@ func (r *repository) FindByDate(ctx context.Context, startOfDay, endOfDay time.T
 			&a.Quantity,
 			&a.PalletsCount,
 			&a.Status,
+			&a.OrderID,
 		); err != nil {
 			return nil, fmt.Errorf("scan appointment: %w", err)
 		}

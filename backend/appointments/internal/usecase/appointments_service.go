@@ -50,6 +50,7 @@ func (s *service) CreateAppointment(ctx context.Context, input domain.CreateAppo
 		Quantity:      input.Quantity,
 		PalletsCount:  input.PalletsCount,
 		Status:        domain.AppointmentStatusScheduled,
+		OrderID:       input.OrderID,
 	}
 
 	if err := s.repo.Create(ctx, appt); err != nil {

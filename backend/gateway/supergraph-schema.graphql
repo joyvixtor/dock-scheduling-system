@@ -33,6 +33,7 @@ type Appointment
   quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
+  orderId: String
 }
 
 enum AppointmentStatus
@@ -55,6 +56,7 @@ input CreateAppointmentInput
   sku: String!
   quantity: Int!
   palletsCount: Int!
+  orderId: String
 }
 
 enum DockStatus
@@ -115,6 +117,7 @@ type Mutation
   completeTransfer(taskId: ID!): TransferTask! @join__field(graph: CROSSDOCK)
   updateInboundDockStatus(id: ID!, status: DockStatus!): InboundDock @join__field(graph: INBOUND)
   createOrder(sku: String!, quantity: Int!): Order! @join__field(graph: ORDERS)
+  completeOrder(id: ID!): Order! @join__field(graph: ORDERS)
   updateOutboundDockStatus(id: ID!, status: DockStatus!): OutboundDock @join__field(graph: OUTBOUND)
 }
 

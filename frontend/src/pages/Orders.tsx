@@ -35,10 +35,10 @@ export default function Orders() {
   const [searchSku, setSearchSku] = useState("");
 
   const [createOrder, { loading: creating }] = useMutation(CREATE_ORDER);
-  
+
   const { data, loading, error, refetch } = useQuery(GET_ORDERS, {
     fetchPolicy: "network-only",
-  });
+  } as any);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,23 +51,23 @@ export default function Orders() {
       // Deterministc SKU generation based on the product name: CARNE MOIDA -> SKU-CARNE-MOIDA
       const normalizedName = sku.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').toUpperCase();
       const generatedSku = `SKU-${normalizedName}`;
-      
+
       await createOrder({
         variables: {
           sku: generatedSku,
           quantity: parseInt(quantity, 10)
         }
-      });
+      } as any);
 
       toast({
         title: "Pedido Criado!",
         description: `Backorder de ${quantity}x ${generatedSku} registrado com sucesso.`,
         className: "bg-green-600 text-white border-none",
       });
-      
+
       setSku("");
       setQuantity("");
-      
+
       // Wait a moment for the new order to settle, then fetch all
       setTimeout(() => refetch(), 200);
     } catch (err: any) {
@@ -81,13 +81,13 @@ export default function Orders() {
   };
 
   const allOrders = data?.allPendingOrders || [];
-  const filteredOrders = searchSku 
+  const filteredOrders = searchSku
     ? allOrders.filter((o: any) => o.sku.includes(searchSku))
     : allOrders;
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-[#2f3942] p-6 text-slate-100 flex gap-6">
-      
+
       {/* Esquerda: Formulário */}
       <div className="w-1/3 flex flex-col gap-6">
         <Card className="bg-[#1e272e] border-slate-700 p-6 shadow-xl">
@@ -95,7 +95,7 @@ export default function Orders() {
             <ShoppingCart className="w-8 h-8 text-cyan-400" />
             <h1 className="text-2xl font-bold text-white tracking-tight">Criar Pedido</h1>
           </div>
-          
+
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-300">Produto (Nome)</label>
@@ -122,8 +122,8 @@ export default function Orders() {
               />
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={creating}
               className="w-full mt-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-6 rounded-lg text-lg flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)]"
             >
@@ -142,7 +142,7 @@ export default function Orders() {
               <Package className="w-6 h-6 text-emerald-400" />
               Pedidos Pendentes (Global)
             </h2>
-            
+
             <form onSubmit={handleSearch} className="flex gap-2">
               <input
                 type="text"
@@ -169,7 +169,7 @@ export default function Orders() {
                 <span className="text-slate-300 font-medium">Total de Pedidos na Fila:</span>
                 <span className="text-2xl font-black text-emerald-400">{filteredOrders.length}</span>
               </div>
-              
+
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-10 text-slate-500 italic">
                   Nenhum pedido pendente encontrado.

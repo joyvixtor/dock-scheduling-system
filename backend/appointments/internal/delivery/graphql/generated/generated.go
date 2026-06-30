@@ -33,6 +33,7 @@ type ResolverRoot interface {
 	Entity() EntityResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	CreateAppointmentInput() CreateAppointmentInputResolver
 }
 
 type DirectiveRoot struct {
@@ -44,6 +45,7 @@ type ComplexityRoot struct {
 		DockID        func(childComplexity int) int
 		EndTime       func(childComplexity int) int
 		ID            func(childComplexity int) int
+		OrderID       func(childComplexity int) int
 		PalletsCount  func(childComplexity int) int
 		Quantity      func(childComplexity int) int
 		ReferenceCode func(childComplexity int) int
@@ -79,6 +81,8 @@ type ComplexityRoot struct {
 type AppointmentResolver interface {
 	StartTime(ctx context.Context, obj *domain.Appointment) (string, error)
 	EndTime(ctx context.Context, obj *domain.Appointment) (string, error)
+
+	OrderID(ctx context.Context, obj *domain.Appointment) (*string, error)
 }
 type EntityResolver interface {
 	FindAppointmentByID(ctx context.Context, id string) (*domain.Appointment, error)
@@ -89,6 +93,10 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	AppointmentsByDate(ctx context.Context, date string) ([]*domain.Appointment, error)
+}
+
+type CreateAppointmentInputResolver interface {
+	OrderID(ctx context.Context, obj *domain.CreateAppointmentInput, data *string) error
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -133,6 +141,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Appointment.ID(childComplexity), true
+	case "Appointment.orderId":
+		if e.ComplexityRoot.Appointment.OrderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Appointment.OrderID(childComplexity), true
 	case "Appointment.palletsCount":
 		if e.ComplexityRoot.Appointment.PalletsCount == nil {
 			break
@@ -339,6 +353,7 @@ type Appointment @key(fields: "id") {
   quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
+  orderId: String
 }
 
 enum AppointmentStatus {
@@ -357,6 +372,7 @@ input CreateAppointmentInput {
   sku: String!
   quantity: Int!
   palletsCount: Int!
+  orderId: String
 }
 
 type Query {
@@ -465,6 +481,8 @@ func (ec *executionContext) childFields_Appointment(ctx context.Context, field g
 		return ec.fieldContext_Appointment_palletsCount(ctx, field)
 	case "status":
 		return ec.fieldContext_Appointment_status(ctx, field)
+	case "orderId":
+		return ec.fieldContext_Appointment_orderId(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Appointment", field.Name)
 }
@@ -973,6 +991,29 @@ func (ec *executionContext) _Appointment_status(ctx context.Context, field graph
 }
 func (ec *executionContext) fieldContext_Appointment_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Appointment", field, false, false, errors.New("field of type AppointmentStatus does not have child fields"))
+}
+
+func (ec *executionContext) _Appointment_orderId(ctx context.Context, field graphql.CollectedField, obj *domain.Appointment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Appointment_orderId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Appointment().OrderID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Appointment_orderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Appointment", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Entity_findAppointmentByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2396,7 +2437,7 @@ func (ec *executionContext) unmarshalInputCreateAppointmentInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"dockId", "carrier", "referenceCode", "startTime", "endTime", "sku", "quantity", "palletsCount"}
+	fieldsInOrder := [...]string{"dockId", "carrier", "referenceCode", "startTime", "endTime", "sku", "quantity", "palletsCount", "orderId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2459,6 +2500,15 @@ func (ec *executionContext) unmarshalInputCreateAppointmentInput(ctx context.Con
 				return it, err
 			}
 			it.PalletsCount = data
+		case "orderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.Resolvers.CreateAppointmentInput().OrderID(ctx, &it, data); err != nil {
+				return it, err
+			}
 		}
 	}
 	return it, nil
@@ -2620,6 +2670,44 @@ func (ec *executionContext) _Appointment(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "orderId":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Appointment_orderId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

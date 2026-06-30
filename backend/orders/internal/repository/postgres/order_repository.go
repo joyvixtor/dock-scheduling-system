@@ -39,7 +39,20 @@ func (r *Repository) CreateOrder(ctx context.Context, order *domain.Order) error
 	`
 	_, err := r.pool.Exec(ctx, query, order.ID, order.SKU, order.Quantity, string(order.Status))
 	if err != nil {
-		return fmt.Errorf("create order: %w", err)
+		return fmt.Errorf("insert order: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) CompleteOrder(ctx context.Context, id string) error {
+	const query = `
+		UPDATE orders
+		SET status = 'SHIPPED'
+		WHERE id = $1
+	`
+	_, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("complete order: %w", err)
 	}
 	return nil
 }

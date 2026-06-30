@@ -11,6 +11,7 @@ type Appointment @key(fields: "id") {
   quantity: Int!
   palletsCount: Int!
   status: AppointmentStatus!
+  orderId: String
 }
 
 enum AppointmentStatus {
@@ -29,6 +30,7 @@ input CreateAppointmentInput {
   sku: String!
   quantity: Int!
   palletsCount: Int!
+  orderId: String
 }
 
 type Query {

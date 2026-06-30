@@ -25,6 +25,7 @@ type Appointment struct {
 	Quantity      int               `json:"quantity"`
 	PalletsCount  int               `json:"palletsCount"`
 	Status        AppointmentStatus `json:"status"`
+	OrderID       *string           `json:"orderId"`
 }
 
 func (Appointment) IsEntity() {}
@@ -38,6 +39,7 @@ type CreateAppointmentInput struct {
 	SKU           string `json:"sku"`
 	Quantity      int    `json:"quantity"`
 	PalletsCount  int    `json:"palletsCount"`
+	OrderID       *string `json:"orderId"`
 }
 
 type AppointmentsRepository interface {

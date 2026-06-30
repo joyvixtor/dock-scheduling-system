@@ -21,4 +21,5 @@ type Query {
 
 type Mutation {
   createOrder(sku: String!, quantity: Int!): Order!
+  completeOrder(id: ID!): Order!
 }
