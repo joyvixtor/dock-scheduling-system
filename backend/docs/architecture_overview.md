@@ -31,10 +31,10 @@ Todos os microsserviços são escritos em **Go (Golang)**, seguindo a arquitetur
 - **Padrão:** Cada microsserviço possui o **seu próprio banco de dados isolado** (ex: `davenport_inbound`, `davenport_crossdock`). Não há junções (JOINs) diretas de SQL entre domínios. Se o Crossdock precisar de informações de Inbound, ele fará uma requisição HTTP via GraphQL.
 
 ## 4. O Fluxo de Dados (Crossdocking Life Cycle)
-1. **Frontend** dispara mutation `updateAppointmentStatus(ARRIVED)`.
-2. **Appointments** atualiza o banco local.
-3. O Frontend dispara `updateInboundDockStatus(OCCUPIED)` para travar a doca física no **Inbound**.
-4. O Frontend dispara `scanInboundPallet(...)`.
-5. O **Crossdock** recebe a carga, consulta o **Outbound** via HTTP para achar a doca de saída mais próxima, e cria a tarefa da empilhadeira (TransferTask).
-6. A **Fila do Operador** no Frontend faz polling no Crossdock para ver a tarefa, aceita e finaliza a transferência.
-7. O Frontend avisa a todos os serviços que o caminhão partiu e a doca está `AVAILABLE` novamente.
+1. **Pedidos de Clientes (Demand-Driven):** O fluxo inicia no subgrafo **Orders**, onde pedidos ficam pendentes aguardando estoque.
+2. **Terminal de Entrada (Check-in):** Um motorista só pode reservar uma doca no **Appointments** se a sua carga estiver atrelada a um *Pedido de Cliente Pendente* (associando o `orderId`).
+3. **Chegada:** O Frontend dispara mutation `updateAppointmentStatus(ARRIVED)`. O **Appointments** atualiza o banco local.
+4. **Alocação Física:** O Frontend dispara `updateInboundDockStatus(OCCUPIED)` para travar a doca física no **Inbound**.
+5. **Crossdocking:** O Frontend dispara `scanInboundPallet(...)`. O **Crossdock** recebe a carga, consulta o **Outbound** via HTTP para achar a doca de saída mais próxima, e cria a tarefa da empilhadeira (TransferTask).
+6. **Movimentação:** A **Fila do Operador** no Frontend faz polling no Crossdock para ver a tarefa, aceita e finaliza a transferência.
+7. **Saída e Conclusão:** O Frontend avisa a todos os serviços que o caminhão partiu (`COMPLETED`). Silenciosamente, dispara `completeOrder(id)` para alterar o status do Pedido para `SHIPPED`, fechando o ciclo logístico e deletando (soft-delete) o pedido da fila!

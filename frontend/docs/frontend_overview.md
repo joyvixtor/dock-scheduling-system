@@ -17,7 +17,7 @@ O sistema foi arquitetado em 4 telas principais. Nenhuma tela opera em silo; tod
 ### 1. 🛃 Terminal de Entrada (`/gate`)
 * `GateCheckIn.tsx`
 * **Usuário:** Motorista da Transportadora ou Porteiro.
-* **Função:** Criar o bloco de agendamento (Appointment) selecionando a doca e os detalhes de carga.
+* **Função:** Criar o bloco de agendamento (Appointment) selecionando a doca e atrelando obrigatoriamente a carga a um **Pedido Pendente** (listado dinamicamente via query `allPendingOrders`). A entrada no pátio é 100% dependente da demanda comercial.
 
 ### 2. 📅 Agenda de Docas (`/schedule`)
 * `DockSchedule.tsx`
@@ -33,6 +33,11 @@ O sistema foi arquitetado em 4 telas principais. Nenhuma tela opera em silo; tod
 * `OperatorQueue.tsx`
 * **Usuário:** Operador de Empilhadeira.
 * **Função:** Recebe as ordens de movimentação (*TransferTasks*) criadas automaticamente quando o Gerente aperta "Chegada". É um checklist de trabalho com botões simples: "Aceitar" e "Confirmar Entrega".
+
+### 5. 📦 Gestão de Pedidos (`/orders`)
+* `Orders.tsx`
+* **Usuário:** Backoffice / Planejamento.
+* **Função:** Criar demanda no armazém. O usuário cria um pedido (`createOrder`) informando o Produto e a Quantidade. Esse pedido entrará num estado pendente (Backorder) que guiará todos os processos de recebimento futuros.
 
 ## 🚀 Estrutura de Pastas
 
